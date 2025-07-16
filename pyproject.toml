@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garisom-tools"
+version = "0.1"
+description = "Assorted tools for the GARISOM model."
+authors = [
+    { name = "Colin Pannikkat", email = "colinpannikkat@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "scikit-learn",
+    "ray[tune]",
+    "tqdm",
+    "SALib",
+]
+
+[project.urls]
+homepage = "https://github.com/colinpannikkat/garisom-tools"
+repository = "https://github.com/colinpannikkat/garisom-tools"
