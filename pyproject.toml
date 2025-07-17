@@ -20,6 +20,7 @@ dependencies = [
     "ray[tune]",
     "tqdm",
     "SALib",
+    "optuna"
 ]
 
 [project.urls]
