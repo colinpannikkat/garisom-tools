@@ -39,7 +39,7 @@ class NormalDistribution(FloatDistribution):
 
 
 class TruncatedNormalDistribution(FloatDistribution):
-    def __init__(self, mu=0.0, sigma=1.0, a=0, b=1e12):
+    def __init__(self, mu=0.0, sigma=1.0, a=1e-12, b=1e12):
         self.mu = mu
         self.sigma = sigma
         self.a = a
@@ -77,7 +77,7 @@ class TruncatedNormalDistribution(FloatDistribution):
         return truncnorm.ppf(internal_param, self._a_std, self._b_std, loc=self.mu, scale=self.sigma)
 
 
-def get_scipy_truncated_normal(loc=0.0, scale=1.0, a=0, b=1e12):
+def get_scipy_truncated_normal(loc=0.0, scale=1.0, a=1e-12, b=1e12):
     a_scaled = (a - loc) / scale
     b_scaled = (b - loc) / scale
     return truncnorm(a=a_scaled, b=b_scaled, loc=loc, scale=scale)
