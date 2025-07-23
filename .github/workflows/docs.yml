@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate documentation with pdoc
         run: |
-          pdoc -d google . --output-dir docs --force
+          pdoc -d google . --output-dir docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
