@@ -1,12 +1,20 @@
 import pandas as pd
 import numpy as np
+import os
 from garisom_tools.model import GarisomModel, Model
 from garisom_tools.config import MetricConfig
 from garisom_tools.utils.metric import Metric
 
 
-def test_dummy():
-    assert True
+model_dir = "../../garisom/02_program_code"
+
+
+def get_parameter_and_configuration_files() -> tuple[str, pd.DataFrame]:
+    return os.path.abspath("./data/configuration.csv"), \
+        pd.read_csv("./data/parameters.csv")
+
+
+config_file, params = get_parameter_and_configuration_files()
 
 
 def test_model_inheritance():
@@ -41,13 +49,37 @@ def test_evaluate_model_returns_dict():
     assert 'dummy' in errors
 
 
-def test_run_parallel_returns_list(monkeypatch):
-    def dummy_run(X, *args, **kwargs):
-        return pd.DataFrame({'a': [1]})
+def test_run_with_X():
 
-    monkeypatch.setattr(GarisomModel, "run", staticmethod(dummy_run))
-    X = [{'x': 1}, {'x': 2}]
-    params = pd.DataFrame({'x': [1, 2]})
-    res = GarisomModel.run_parallel(X, params, 'config.cfg', 1, 'model_dir', workers=2)
-    assert isinstance(res, list)
-    assert all(isinstance(r, pd.DataFrame) for r in res if r is not None)
+    run_kwargs = {
+        "params": params,
+        "config_file": config_file,
+        "population": 1,
+        "model_dir": os.path.abspath(model_dir),
+        "verbose": True,
+        "out": None,
+        "err": None
+    }
+
+    model = GarisomModel()
+    out = model.run(X={'i_leafAreaIndex': 2.5}, **run_kwargs)
+
+    assert out is not None
+
+
+def test_run_no_X():
+
+    run_kwargs = {
+        "params": params,
+        "config_file": config_file,
+        "population": 1,
+        "model_dir": os.path.abspath(model_dir),
+        "verbose": True,
+        "out": None,
+        "err": None
+    }
+
+    model = GarisomModel()
+    out = model.run(**run_kwargs)
+
+    assert out is not None
