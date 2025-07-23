@@ -1,0 +1,2 @@
+i_gWaterEnable,i_soilRedEnable,i_soilEvapEnable,i_rainEnable,i_useGSDataStress,i_useGSDataOpt,i_refilling,i_predawnsMode,i_cavitFatigue,i_stemOnly,i_multipleSP,i_speciesN,i_ClimateData,i_GSData,i_dataheader,i_sumheader
+n,y,y,y,n,n,n,n,n,y,n,1,../03_test_data/climate_forcing_files/dataset_short.csv,../03_test_data/climate_forcing_files/seasonlimits_2.0.0.csv,./dataheader.csv,./sumheader.csv

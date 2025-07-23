@@ -45,14 +45,14 @@ from garisom_tools import GarisomModel
 
 # Example input parameters
 X = {'i_leafAreaIndex': 4.61, 'i_kmaxTree': 345.}
-params = pd.read_csv("./parameters.csv")
+params = pd.read_csv("./parameters.csv")  # Rest of parameters pulled from here
 config_file = "./configuration.csv"
 population = 1  # corresponds to row in configuration.csv
 model_dir = "./garisom/02_program_code"
 
 # Run the model
 output = GarisomModel.run(
-    X=X,
+    X=X,    # Optional argument, can run without passing in specific inputs
     params=params,
     config_file=config_file,
     population=population,
