@@ -34,12 +34,12 @@ class Model(ABC):
 
     @staticmethod
     @abstractmethod
-    def run_parallel(X: list[dict[str, Any]], *args, **kwargs) -> list[ArrayLike]:
+    def run_parallel(X: list[dict[str, Any]] = None, *args, **kwargs) -> list[ArrayLike | None]:
         pass
 
     @staticmethod
     @abstractmethod
-    def run(X: dict[str, Any], *args, **kwargs) -> ArrayLike | None:
+    def run(X: dict[str, Any] = None, *args, **kwargs) -> ArrayLike | None:
         pass
 
     @staticmethod
@@ -76,7 +76,7 @@ class Model(ABC):
         objective = self.get_objective()
 
         def wrapped_model(config: dict) -> None:
-            out = objective(config)
+            out = objective(X=config)
             errs = self.evaluate_model(
                 out,
                 metric_config=metric,
@@ -97,12 +97,12 @@ class GarisomModel(Model):
 
     @staticmethod
     def run_parallel(
-        X: list[dict[str, float]],
         params: pd.DataFrame,
         config_file: str,
         population: int,
         model_dir: str,
         workers: int = 4,
+        X: list[dict[str, float]] = None,
         **kwargs
     ) -> list[pd.DataFrame | None]:
 
@@ -115,11 +115,11 @@ class GarisomModel(Model):
             futures = {
                 executor.submit(
                     GarisomModel.run,
-                    X[i],
                     params,
                     config_file,
                     population,
                     model_dir,
+                    X=X[i] if X is not None else None,
                     **kwargs
                 ):
                 i for i in range(N)  # Store corresponding sample number
@@ -140,22 +140,21 @@ class GarisomModel(Model):
 
     @staticmethod
     def run(
-        X: dict[str, float],
         params: pd.DataFrame,
         config_file: str,
         population: int,
         model_dir: str,
+        X: dict[str, float] = None,
         **kwargs
     ) -> pd.DataFrame | None:
         with TemporaryDirectory() as tmp:
-            # Get unique TMP_DIR and make directory for specific process
             TMP_PARAM_FILE = f"{tmp}/params.csv"
 
-            # Overwrite parameters with sample params
-            for name in X.keys():
-                params.at[population - 1, name] = X[name]
+            # Overwrite parameters with sample params if X is provided
+            if X is not None:
+                for name in X.keys():
+                    params.at[population - 1, name] = X[name]
 
-            # Setup parameter, configuration, and output files
             params.to_csv(TMP_PARAM_FILE, index=False)
 
             output = GarisomModel.launch_model(
@@ -177,10 +176,15 @@ class GarisomModel(Model):
         population: int,
         save_location: str,
         out: int = subprocess.DEVNULL,
-        return_on_fail: bool = False
+        err: int = subprocess.DEVNULL,
+        return_on_fail: bool = False,
+        verbose: bool = False
     ) -> pd.DataFrame | None:
 
         params = pd.read_csv(param_file)
+
+        if verbose:
+            print("Running model subprocess...")
 
         p = subprocess.run(
             [
@@ -192,10 +196,12 @@ class GarisomModel(Model):
             ],
             cwd=model_dir,
             stdout=out,
-            stderr=out
+            stderr=err
         )
 
         if p.returncode != 0 and not return_on_fail:
+            if verbose:
+                print("Model failed with returncode: ", p.returncode)
             return None
 
         # Get species, region, and site to determine output file
