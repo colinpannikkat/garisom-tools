@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate documentation with pdoc
         run: |
-          pdoc -d google . --output-dir docs
+          pdoc ./garisom_tools --output-dir docs -d google     
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
