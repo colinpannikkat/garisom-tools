@@ -108,15 +108,24 @@ class Sim:
 
         return samples
 
-    def run(self, n: int = 1000, parallel: bool = True, workers: int = 4) -> list[pd.DataFrame]:
+    def run(
+        self,
+        n: int = 1000,
+        parallel: bool = True,
+        workers: int = 4,
+        X: dict[str, float] = None
+    ) -> list[pd.DataFrame]:
         """
         Runs the simulation by generating samples and executing the model on each sample.
 
         Args:
             n (int, optional): Number of samples to generate. Defaults to 1000.
-                parallel (bool, default=True): Whether to run the model in parallel.
+            parallel (bool, default=True): Whether to run the model in parallel.
             workers (int, default=4): Number of workers. Used for sampling, and
                 also for parallel computation is parallel=True.
+            X (dict[str, float], optional): Default parameter replacements to use across
+                all samples. Any parameters matching the ones used in the sample space
+                will be overridden.
 
         Returns:
             list[pd.DataFrame]: Outputs for every parameter sample.
@@ -124,12 +133,15 @@ class Sim:
 
         samples = self._sample_from_space(n, workers)  # (n, dim)
 
+        if X:  # If there are default parameters passed in
+            samples = [dict(X, **sample) for sample in samples]
+
         if parallel:
-            results = self.model.run_parallel(samples, workers=workers, **self.run_kwargs)
+            results = self.model.run_parallel(X=samples, workers=workers, **self.run_kwargs)
         else:
             results = []
             for sample in samples:
-                results.append(self.model.run(sample, **self.run_kwargs))
+                results.append(self.model.run(X=sample, **self.run_kwargs))
 
         return results
 

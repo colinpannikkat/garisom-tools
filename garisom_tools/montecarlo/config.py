@@ -7,6 +7,7 @@ from garisom_tools.utils.distributions import (
 
 import json
 from dataclasses import dataclass, asdict
+from typing import Optional
 
 
 @dataclass
@@ -48,3 +49,4 @@ class MonteCarloConfig:
 @dataclass
 class GarisomMonteCarloConfig(MonteCarloConfig):
     population: int = 1
+    parameters: Optional[dict[str, float]] = None
