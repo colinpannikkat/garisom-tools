@@ -183,6 +183,7 @@ class Sim:
             "ci_low": np.ndarray((T, D)),
             "ci_high": np.ndarray((T, D)),
             "mean": np.ndarray((T, D)),
+            "std": np.ndarray((T, D)),
             "min_val": np.ndarray((T, D)),
             "max_val": np.ndarray((T, D)),
         }
@@ -195,25 +196,24 @@ class Sim:
 
         for i, output in enumerate(results[0].columns):
 
-            for t in range(T):
+            # Add index_columns data, assume this is the same for each sample
+            # These are things like timestamps, weather inputs, etc...
+            if output in index_columns:
 
-                # Add index_columns data, assume this is the same for each sample
-                # These are things like timestamps, weather inputs, etc...
-                if output in index_columns:
+                for key in stats.keys():
+                    stats[key][:, i] = data[0, :, i]
 
-                    for key in stats.keys():
-                        stats[key][t, i] = data[0, t, i]
+            else:
 
-                else:
+                vals = data[:, :, i]
+                vals = vals[~np.isnan(vals)]
 
-                    vals = data[:, t, i]
-                    vals = vals[~np.isnan(vals)]
-
-                    stats["ci_low"][t, i] = np.quantile(vals, 0.025)
-                    stats["ci_high"][t, i] = np.quantile(vals, 0.975)
-                    stats["mean"][t, i] = np.mean(vals)
-                    stats["min_val"][t, i] = np.min(vals)
-                    stats["max_val"][t, i] = np.max(vals)
+                stats["ci_low"][:, i] = np.quantile(vals, 0.025, axis=0)
+                stats["ci_high"][:, i] = np.quantile(vals, 0.975, axis=0)
+                stats["mean"][:, i] = np.mean(vals, axis=0)
+                stats["std"][:, i] = np.std(vals, axis=0, ddof=1)  # sample stddev
+                stats["min_val"][:, i] = np.min(vals, axis=0)
+                stats["max_val"][:, i] = np.max(vals, axis=0)
 
         stats_res = {
             key: pd.DataFrame(val, columns=columns)
