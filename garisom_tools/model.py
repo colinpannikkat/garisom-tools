@@ -629,9 +629,6 @@ class GarisomModel(Model):
 
         params = pd.read_csv(param_file)
 
-        if verbose:
-            print("Running model subprocess...")
-
         p = subprocess.run(
             [
                 "./run",
@@ -645,10 +642,11 @@ class GarisomModel(Model):
             stderr=err
         )
 
-        if p.returncode != 0 and not return_on_fail:
+        if p.returncode != 0:
             if verbose:
                 print("Model failed with returncode: ", p.returncode)
-            return None
+            if not return_on_fail:
+                return None
 
         # Get species, region, and site to determine output file
         species = params.at[population - 1, 'i_sp']

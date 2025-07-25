@@ -153,7 +153,7 @@ class Sim:
 
     def analyze(
         self,
-        results: list[pd.DataFrame],
+        results: list[pd.DataFrame | None],
         index_columns: list[str]
     ) -> StatsResults:
         """
@@ -168,7 +168,13 @@ class Sim:
             dict: Dictionary with Dataframe for each statistic
         """
         # Put results into an ndarray for easy indexing
-        data = np.array(results)  # N x T x D
+        # Only include sample result if it is not None, although 'return_on_fail'
+        # can be passed into the model_kwargs, it does not guarantee that a file
+        # will be saved on model failure, especially if a memory error, or a segfault
+        # occurs.
+        # This means that the final N may be smaller than originally provided
+        data = np.array([result for result in results if result is not None])  # N? x T x D
+
         stats = {}
         columns = results[0].columns  # assume all results output same format
 
@@ -183,7 +189,8 @@ class Sim:
             "ci_low": np.ndarray((T, D)),
             "ci_high": np.ndarray((T, D)),
             "mean": np.ndarray((T, D)),
-            "std": np.ndarray((T, D)),
+            "stddev": np.ndarray((T, D)),
+            "stderr": np.ndarray((T, D)),
             "min_val": np.ndarray((T, D)),
             "max_val": np.ndarray((T, D)),
         }
@@ -211,7 +218,8 @@ class Sim:
                 stats["ci_low"][:, i] = np.quantile(vals, 0.025, axis=0)
                 stats["ci_high"][:, i] = np.quantile(vals, 0.975, axis=0)
                 stats["mean"][:, i] = np.mean(vals, axis=0)
-                stats["std"][:, i] = np.std(vals, axis=0, ddof=1)  # sample stddev
+                stats["stddev"][:, i] = np.std(vals, axis=0, ddof=1)  # sample stddev
+                stats["stderr"][:, i] = stats["stddev"][:, i] / np.sqrt(vals.shape[0])  # stderr = s / sqrt(n)
                 stats["min_val"][:, i] = np.min(vals, axis=0)
                 stats["max_val"][:, i] = np.max(vals, axis=0)
 
