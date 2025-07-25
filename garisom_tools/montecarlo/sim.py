@@ -83,6 +83,8 @@ class Sim:
         random number generator, then applies the inverse cumulative distribution function
         (ppf) to map uniform samples to the parameter's distribution.
 
+        If the sampler is 'sobol', then 'n' must be a power of 2.
+
         Args:
             n (int): Number of samples to generate.
             workers (int): Number of worker threads/processes to use for sampling.
@@ -91,7 +93,11 @@ class Sim:
             list[dict[str, float]]: A list of dictionaries, each containing s
                 ampled values for all parameters.
         """
-        samples = self.engine.random(n, workers=workers)  # (n, dim)
+        if not isinstance(self.engine, qmc.Sobol):
+            samples = self.engine.random(n, workers=workers)  # (n, dim)
+        else:
+            assert np.log2(n) % 1 == 0  # checks that n is a power of 2 for sobol engine
+            samples = self.engine.random_base2(m=int(np.log2(n)))  # (n, dim)
 
         # For each parameter, compute inverse distribution from [0, 1) samples
         params = list(self.space.keys())
