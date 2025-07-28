@@ -536,6 +536,10 @@ class GarisomModel(Model):
             - Automatically determines output filename based on species/region/site IDs
             - Preserves original parameters DataFrame (modifications are local)
         """
+
+        # Make a deep copy to preserve the original DataFrame
+        params = params.copy(deep=True)
+
         with TemporaryDirectory() as tmp:
             TMP_PARAM_FILE = f"{tmp}/params.csv"
 
