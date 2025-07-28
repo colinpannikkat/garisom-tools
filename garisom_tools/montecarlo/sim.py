@@ -213,7 +213,6 @@ class Sim:
             else:
 
                 vals = data[:, :, i]
-                vals = vals[~np.isnan(vals)]
 
                 stats["ci_low"][:, i] = np.quantile(vals, 0.025, axis=0)
                 stats["ci_high"][:, i] = np.quantile(vals, 0.975, axis=0)
