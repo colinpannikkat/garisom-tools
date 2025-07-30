@@ -5,7 +5,7 @@ Assorted tools for the GARISOM model.
 ## Features
 - Model wrapper for running in Python along with easy evaluation
   - Parallel execution with multiprocessing
-- Parameter Bayesian optimization using RayTune
+- Bayesian parameter optimization using RayTune
 - Easy configuration management
 - Monte Carlo simulation
 - Sensitivity analysis
