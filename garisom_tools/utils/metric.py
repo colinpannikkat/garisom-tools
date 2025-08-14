@@ -23,10 +23,10 @@ from garisom_tools.utils.metric import Metric, nash_sutcliffe_efficiency, Mode
 import numpy as np
 
 # Create custom metric
-nse_metric = Metric('nse', 'streamflow', nash_sutcliffe_efficiency)
+nse_metric = Metric('nse', 'leaftemp', nash_sutcliffe_efficiency)
 
 # Create from name
-rmse_metric = Metric.from_name('rmse', 'leaf_temp')
+rmse_metric = Metric.from_name('rmse', 'leaftemp')
 
 # Use metric function directly
 predictions = np.array([1.0, 2.0, 3.0])
@@ -78,10 +78,10 @@ def nash_sutcliffe_efficiency(predictions, targets):
     Example:
         ```python
         import numpy as np
-        
+
         observed = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         predicted = np.array([1.1, 1.9, 3.2, 3.8, 5.1])
-        
+
         nse = nash_sutcliffe_efficiency(predicted, observed)
         print(f"Nash-Sutcliffe Efficiency: {nse:.3f}")
         ```
@@ -117,10 +117,10 @@ def normalized_nash_sutcliffe_efficiency(predictions, targets):
     Example:
         ```python
         import numpy as np
-        
+
         observed = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         predicted = np.array([1.1, 1.9, 3.2, 3.8, 5.1])
-        
+
         nnse = normalized_nash_sutcliffe_efficiency(predicted, observed)
         print(f"Normalized NSE: {nnse:.3f}")
         ```
@@ -149,14 +149,14 @@ class Metric:
     Example:
         ```python
         from sklearn.metrics import mean_squared_error
-        
+
         # Create custom metric
         mse_metric = Metric(
             name='mse_temp',
             output_name='temperature',
             func=mean_squared_error
         )
-        
+
         # Use metric
         predictions = [1.0, 2.0, 3.0]
         targets = [1.1, 1.9, 3.2]
@@ -220,7 +220,8 @@ class Metric:
             "r2": R2,
             "mape": MAPE,
             "made": MADE,
-            "nnse": NNSE
+            "nnse": NNSE,
+            "nse": NSE
         }
 
         # Get metric class
@@ -348,6 +349,23 @@ class NNSE(Metric):
         super().__init__(name=name, output_name=output_name, func=normalized_nash_sutcliffe_efficiency)
 
 
+class NSE(Metric):
+    """
+    Nash-Sutcliffe Efficiency metric.
+
+    Computes the Nash-Sutcliffe efficiency coefficient, which is
+    bounded between -inf and 1. Higher values indicate better performance.
+
+    Formula: NSE = 1 - (Σ(target - prediction)² / Σ(target - mean(target))²)
+
+    Args:
+        output_name (str): Name of the model output variable.
+        name (str, optional): Metric identifier. Defaults to "nse".
+    """
+    def __init__(self, output_name: str, name: str = "nse"):
+        super().__init__(name=name, output_name=output_name, func=normalized_nash_sutcliffe_efficiency)
+
+
 # Evaluation Modes
 class Mode(str, Enum):
     """
@@ -398,7 +416,7 @@ class Mode(str, Enum):
             ```python
             min_mode = Mode.from_name('MIN')    # Case insensitive
             max_mode = Mode.from_name('max')
-            
+
             # Use in configuration
             modes = [Mode.from_name(m) for m in ['min', 'max', 'min']]
             ```

@@ -23,8 +23,8 @@ mapping = {
 
 # Create space configuration
 space_config = SpaceConfig.from_dict(mapping, {
-    'growth_rate': ['uniform', [0.01, 0.1]],
-    'water_efficiency': ['normal', [0.8, 0.1]]
+    'i_rootBeta': ['uniform', [0.01, 0.1]],
+    'i_kmaxTree': ['truncnormal', [239, 12]]
 })
 
 # Get search space for optimization
@@ -113,16 +113,16 @@ class SpaceConfig(dict[str, SampleSpace]):
 
         # Create from configuration dictionary
         config_data = {
-            'growth_rate': ['uniform', [0.01, 0.1]],
-            'water_efficiency': ['normal', [0.8, 0.1]],
-            'root_depth': ['uniform', [0.5, 2.0]]
+            'i_fieldCapFrac': ['uniform', [0.01, 0.1]],
+            'i_fieldCapPercInit': ['normal', [0.8, 0.1]],
+            'i_rootBeta': ['uniform', [0.5, 1]]
         }
 
         space_config = SpaceConfig.from_dict(mapping, config_data)
 
         # Use with optimization
         search_space = space_config.get_search_space()
-        
+
         # Access individual spaces
         growth_space = space_config['growth_rate']
         print(f"Growth rate distribution: {growth_space.distribution}")
