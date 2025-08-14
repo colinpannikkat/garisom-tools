@@ -11,6 +11,7 @@ parameter space exploration.
 
 Typical usage example:
 
+```python
     from garisom_tools import Model
     from garisom_tools.montecarlo import MonteCarloConfig, Sim
 
@@ -19,6 +20,7 @@ Typical usage example:
     sim = Sim(model, config, run_kwargs={})
     results = sim.run(n=1024, parallel=True)
     stats = sim.analyze(results, index_columns=["time"])
+```
 """
 
 # Model running

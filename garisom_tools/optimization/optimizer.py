@@ -7,6 +7,7 @@ multi-objective optimization and returns the best results for each metric.
 
 Typical usage example:
 
+```python
     from garisom_tools import Model
     from garisom_tools.optimization import OptimizationConfig, Optimizer
 
@@ -14,6 +15,7 @@ Typical usage example:
     config = OptimizationConfig.from_json("config.json")
     optimizer = Optimizer(model, config)
     results = optimizer.run()
+```
 """
 
 # Config and model class

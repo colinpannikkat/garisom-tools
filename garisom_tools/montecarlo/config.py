@@ -11,11 +11,13 @@ parameters.
 
 Typical usage example:
 
+```python
     from garisom_tools.montecarlo import MonteCarloConfig
 
     config = MonteCarloConfig.from_json("mc_config.json")
     config.num_samples = 2048
     config.to_json("updated_config.json")
+```
 """
 
 from ..config.space import SpaceConfig
