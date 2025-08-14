@@ -14,7 +14,6 @@ into a reusable class-based structure.
 
 - `SensitivityAnalysis`: Main class for conducting sensitivity analysis
 - `SobolAnalysis`: Sobol sensitivity indices calculation
-- `MorrisAnalysis`: Morris one-at-a-time sensitivity analysis
 - `SAConfig`: Configuration for sensitivity analysis experiments
 
 ## Example Usage (Planned)
@@ -33,7 +32,7 @@ model = GarisomModel(run_kwargs={...})
 sa = SensitivityAnalysis(
     model=model,
     config=sa_config,
-    method='sobol'  # or 'morris'
+    method='sobol'
 )
 
 # Run analysis

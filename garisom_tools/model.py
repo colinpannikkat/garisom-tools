@@ -292,9 +292,8 @@ class GarisomModel(Model):
     """
     Concrete implementation of the Model interface for the GARISOM ecological model.
 
-    The GarisomModel class provides functionality to run the GARISOM (Growth And Resource
-    Interaction Simulation Of Markov) ecological model, which simulates plant growth,
-    resource allocation, and environmental interactions.
+    The GarisomModel class provides functionality to run the GARISOM (Gain Risk Stomatal Optimization) 
+    ecological model, which simulates plant growth, resource allocation, and environmental interactions.
 
     This implementation:
     - Runs GARISOM as a subprocess using parameter and configuration files
@@ -331,7 +330,7 @@ class GarisomModel(Model):
         )
 
         # Run with custom parameters
-        result = model.run(X={'growth_rate': 0.05, 'water_efficiency': 0.8})
+        result = model.run(X={'i_kmaxTree': 230, 'i_rootBeta': 0.8})
 
         # Evaluate against ground truth
         metrics = model.evaluate_model(
@@ -408,9 +407,9 @@ class GarisomModel(Model):
 
             # Define parameter variations
             param_sets = [
-                {'growth_rate': 0.05, 'water_efficiency': 0.8},
-                {'growth_rate': 0.06, 'water_efficiency': 0.7},
-                {'growth_rate': 0.04, 'water_efficiency': 0.9}
+                {'i_fieldCapFrac': 0.05, 'i_fieldCapPercInit': 0.8},
+                {'i_fieldCapFrac': 0.06, 'i_fieldCapPercInit': 0.7},
+                {'i_fieldCapFrac': 0.04, 'i_fieldCapPercInit': 0.9}
             ]
 
             # Run in parallel
@@ -497,7 +496,7 @@ class GarisomModel(Model):
             **kwargs: Additional keyword arguments passed to launch_model().
                 Common options include:
                 - verbose (bool): Enable detailed output
-                - return_on_fail (bool): Return None instead of raising on failure
+                - return_on_fail (bool): Attempts to get output files on failure
 
         Returns:
             pd.DataFrame | None: Model output containing timestep data with columns
@@ -520,7 +519,7 @@ class GarisomModel(Model):
                 config_file='model_config.csv',
                 population=1,
                 model_dir='/path/to/garisom',
-                X={'growth_rate': 0.05, 'water_efficiency': 0.8},
+                X={'i_fieldCapPercInit': 0.05, 'i_fieldCapFrac': 0.8},
                 verbose=True
             )
 
@@ -708,7 +707,7 @@ class GarisomModel(Model):
             metric_config = MetricConfig.from_dict({
                 'metrics': ['rmse', 'r2', 'nse'],
                 'modes': ['min', 'max', 'max'],
-                'params': ['leaf_temp', 'leaf_temp', 'transpiration']
+                'params': ['leaftemp', 'leaftemp', 'E-MD']
             })
 
             # Load ground truth data

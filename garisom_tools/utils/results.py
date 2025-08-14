@@ -118,12 +118,12 @@ class ParamResults(dict[str, MetricResult]):
 
         # Add results for different optimization criteria
         results['best_rmse'] = MetricResult(
-            scores={'rmse': 0.12, 'r2': 0.88},
+            scores={'rmse': 0.12, 'r2': 0.95},
             parameters={'param1': 0.5, 'param2': 1.2}
         )
 
         results['best_r2'] = MetricResult(
-            scores={'rmse': 0.15, 'r2': 0.92},
+            scores={'rmse': 0.15, 'r2': 0.88},
             parameters={'param1': 0.6, 'param2': 1.0}
         )
 

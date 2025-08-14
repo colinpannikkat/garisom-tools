@@ -1,3 +1,26 @@
+"""Monte Carlo simulation framework with quasi-random sampling.
+
+This module provides the Sim class for running Monte Carlo simulations using
+various quasi-random sampling engines including Sobol sequences, Latin
+Hypercube sampling, and Halton sequences. It supports parallel execution
+and provides statistical analysis of simulation results.
+
+The module integrates with the Garisom modeling framework to enable
+uncertainty quantification and sensitivity analysis through systematic
+parameter space exploration.
+
+Typical usage example:
+
+    from garisom_tools import Model
+    from garisom_tools.montecarlo import MonteCarloConfig, Sim
+
+    model = Model()
+    config = MonteCarloConfig.from_json("mc_config.json")
+    sim = Sim(model, config, run_kwargs={})
+    results = sim.run(n=1024, parallel=True)
+    stats = sim.analyze(results, index_columns=["time"])
+"""
+
 # Model running
 from garisom_tools import Model
 from .config import MonteCarloConfig
@@ -18,26 +41,29 @@ import matplotlib.pyplot as plt
 
 
 class Sim:
-    """
-    Sim class for running Monte Carlo simulations with configurable sampling engines and search spaces.
+    """Monte Carlo simulation runner with configurable sampling engines.
+
+    This class orchestrates Monte Carlo simulations by combining quasi-random
+    sampling methods with model execution. It supports multiple sampling
+    engines for exploring parameter space and provides parallel execution
+    capabilities for efficient computation.
+
+    The class generates parameter samples using quasi-random sequences,
+    executes the model for each sample, and provides statistical analysis
+    of the results including confidence intervals and summary statistics.
 
     Attributes:
-        space (dict[str, Callable]): Dictionary mapping parameter names to their sampling distributions.
-        model (Model): The model to be executed for each sample.
+        space (dict[str, Callable]): Dictionary mapping parameter names to
+            their sampling distributions.
+        outputs (list): List of output variables to collect from simulations.
+        model (Model): The model instance to be executed for each sample.
+        run_kwargs (dict): Arguments passed to the model during execution.
         seed (int): Random seed for reproducibility.
         rng (np.random.Generator): Random number generator instance.
-        engine: Sampling engine instance (Sobol, LatinHypercube, or Halton).
-
-        space_dict (dict): Dictionary defining the parameter search space.
-        run_kwargs (dict): Arguments for initializing the Model.
-        engine_kwargs (dict): Arguments for initializing the sampling engine.
-        engine (Literal['sobol', 'latin', 'halton'], optional): Sampling engine type. Defaults to 'sobol'.
-        **kwargs: Additional keyword arguments (e.g., 'seed').
-
-    Methods:
-        run(n: int = 1000, parallel: bool = True, workers: int = 4) -> list[pd.DataFrame]:
-            Supports parallel execution.
+        engine: Quasi-random sampling engine instance (Sobol, LatinHypercube,
+            or Halton).
     """
+
     def __init__(
         self,
         model: Model,
@@ -47,6 +73,22 @@ class Sim:
         engine: Literal['sobol', 'latin', 'halton'] = 'sobol',
         **kwargs
     ):
+        """Initializes the Sim with model, configuration, and sampling settings.
+
+        Args:
+            model (Model): The model instance to run simulations on. Must
+                implement run() and run_parallel() methods.
+            config (MonteCarloConfig): Configuration object containing the
+                parameter space definition and output specifications.
+            run_kwargs (dict): Keyword arguments to pass to the model's run
+                method. Should include any model-specific parameters.
+            engine_kwargs (dict, optional): Additional arguments for the
+                sampling engine initialization. Defaults to {}.
+            engine (Literal['sobol', 'latin', 'halton'], optional): Type of
+                quasi-random sampling engine to use. Defaults to 'sobol'.
+            **kwargs: Additional keyword arguments including:
+                seed (int): Random seed for reproducibility. Defaults to 42.
+        """
         self.space: dict[str, Callable] = config.space.get_search_space()
         self.outputs: list = config.outputs
         self.model: Model = model
@@ -66,6 +108,26 @@ class Sim:
 
     @staticmethod
     def _get_engine(engine: str, **kwargs):
+        """Creates and returns the specified quasi-random sampling engine.
+
+        Factory method that instantiates the appropriate sampling engine
+        based on the engine type. Supports Sobol sequences, Latin Hypercube
+        sampling, and Halton sequences.
+
+        Args:
+            engine (str): Type of sampling engine to create. Must be one of
+                'sobol', 'latin', or 'halton'.
+            **kwargs: Additional arguments passed to the engine constructor.
+                Common arguments include 'd' (dimensionality) and 'rng'
+                (random number generator).
+
+        Returns:
+            qmc.QMCEngine: An instance of the specified quasi-random sampling
+                engine ready for generating samples.
+
+        Raises:
+            ValueError: If the specified engine type is not supported.
+        """
         match engine:
             case 'sobol':
                 return qmc.Sobol(**kwargs)
@@ -75,38 +137,43 @@ class Sim:
                 return qmc.Halton(**kwargs)
 
     def _sample_from_space(self, n: int, workers: int) -> list[dict[str, float]]:
-        """
-        Generates a list of parameter samples from the defined parameter space using
-        random sampling.
+        """Generates parameter samples from the defined search space.
 
-        For each parameter in the space, draws `n` random samples using the engine's
-        random number generator, then applies the inverse cumulative distribution function
-        (ppf) to map uniform samples to the parameter's distribution.
+        Creates n samples from the parameter space using the configured
+        quasi-random sampling engine. For each parameter, uniform samples
+        from [0,1) are generated and then transformed using the parameter's
+        inverse cumulative distribution function (ppf).
 
-        If the sampler is 'sobol', then 'n' must be a power of 2.
+        For Sobol sequences, the number of samples must be a power of 2 to
+        ensure proper space-filling properties.
 
         Args:
-            n (int): Number of samples to generate.
-            workers (int): Number of worker threads/processes to use for sampling.
+            n (int): Number of samples to generate. For Sobol engine, must
+                be a power of 2.
+            workers (int): Number of worker threads/processes to use for
+                parallel sampling (where supported by the engine).
 
         Returns:
-            list[dict[str, float]]: A list of dictionaries, each containing s
-                ampled values for all parameters.
+            list[dict[str, float]]: A list of parameter dictionaries, each
+                containing sampled values for all parameters in the space.
+
+        Raises:
+            AssertionError: If using Sobol engine and n is not a power of 2.
         """
         if not isinstance(self.engine, qmc.Sobol):
             samples = self.engine.random(n, workers=workers)  # (n, dim)
         else:
-            assert np.log2(n) % 1 == 0  # checks that n is a power of 2 for sobol engine
+            assert np.log2(n) % 1 == 0  # Ensure n is a power of 2 for Sobol
             samples = self.engine.random_base2(m=int(np.log2(n)))  # (n, dim)
 
-        # For each parameter, compute inverse distribution from [0, 1) samples
+        # Transform uniform samples to parameter distributions using inverse CDF
         params = list(self.space.keys())
         param_values = {
             param: self.space[param].ppf(samples[:, i])
             for i, param in enumerate(params)
         }  # (dim, n)
 
-        # Iterate through each parameter group to get samples from each parameter
+        # Reorganize into list of parameter dictionaries for model execution
         samples = [
             {name: param_values[name][i] for name in params}
             for i in range(n)
@@ -121,25 +188,37 @@ class Sim:
         workers: int = 4,
         X: dict[str, float] = None
     ) -> list[pd.DataFrame]:
-        """
-        Runs the simulation by generating samples and executing the model on each sample.
+        """Executes the Monte Carlo simulation.
+
+        Generates parameter samples and runs the model for each sample,
+        optionally in parallel. The method supports overriding default
+        parameter values and returns the complete simulation results.
 
         Args:
-            n (int, optional): Number of samples to generate. Defaults to 1000.
-            parallel (bool, default=True): Whether to run the model in parallel.
-            workers (int, default=4): Number of workers. Used for sampling, and
-                also for parallel computation is parallel=True.
-            X (dict[str, float], optional): Default parameter replacements to use across
-                all samples. Any parameters matching the ones used in the sample space
-                will be overridden.
+            n (int, optional): Number of Monte Carlo samples to generate.
+                For Sobol engine, should be a power of 2. Defaults to 1000.
+            parallel (bool, optional): Whether to execute model runs in
+                parallel for faster computation. Defaults to True.
+            workers (int, optional): Number of parallel workers to use for
+                both sampling and model execution. Defaults to 4.
+            X (dict[str, float], optional): Default parameter values to
+                apply across all samples. These will override sampled
+                values for matching parameter names. Defaults to None.
 
         Returns:
-            list[pd.DataFrame]: Outputs for every parameter sample.
+            list[pd.DataFrame]: List of DataFrames containing model outputs
+                for each parameter sample. Length equals the number of
+                successful model runs (may be less than n if some fail).
+
+        Example:
+            >>> sim = Sim(model, config, run_kwargs={})
+            >>> results = sim.run(n=512, parallel=True, workers=8)
+            >>> print(f"Completed {len(results)} simulations")
         """
 
         samples = self._sample_from_space(n, workers)  # (n, dim)
 
-        if X:  # If there are default parameters passed in
+        if X:  # Apply default parameter overrides if provided
             samples = [dict(X, **sample) for sample in samples]
 
         if parallel:
@@ -156,33 +235,54 @@ class Sim:
         results: list[pd.DataFrame | None],
         index_columns: list[str]
     ) -> StatsResults:
-        """
-        Analyze simulation results to compute min, max, average, median, and 95% confidence interval
-        for each output across first dimension.
+        """Analyzes simulation results to compute summary statistics.
+
+        Computes comprehensive statistical summaries including confidence
+        intervals, means, standard deviations, and extrema for each output
+        variable across all simulation runs. Index columns (such as timestamps
+        or weather inputs) are preserved from the first successful run.
 
         Args:
-            results (list[pd.DataFrame]): List of DataFrames from simulation runs.
-            index_columns (list[str]): List of columns to treat as index columns (e.g., timestamps, weather inputs).
+            results (list[pd.DataFrame | None]): List of simulation result
+                DataFrames. None values (from failed runs) are automatically
+                excluded from analysis.
+            index_columns (list[str]): Column names to treat as index variables
+                that should be preserved unchanged from the first result.
+                Typically includes time, weather inputs, or other non-stochastic
+                variables.
 
         Returns:
-            dict: Dictionary with Dataframe for each statistic
+            StatsResults: Object containing DataFrames with statistical
+                summaries including:
+                - ci_low, ci_high: 95% confidence interval bounds
+                - mean: Sample means
+                - stddev: Sample standard deviations
+                - stderr: Standard errors of the means
+                - min_val, max_val: Minimum and maximum values
+
+        Note:
+            The final sample size may be smaller than the original n if some
+            model runs failed and returned None. Index columns are copied
+            from the first successful result under the assumption that they
+            are identical across all runs.
+
+        Example:
+            >>> stats = sim.analyze(results, index_columns=["time", "weather"])
+            >>> mean_df = stats.mean
+            >>> ci_low_df = stats.ci_low
         """
-        # Put results into an ndarray for easy indexing
-        # Only include sample result if it is not None, although 'return_on_fail'
-        # can be passed into the model_kwargs, it does not guarantee that a file
-        # will be saved on model failure, especially if a memory error, or a segfault
-        # occurs.
-        # This means that the final N may be smaller than originally provided
+        # Filter out None results from failed model runs
+        # Final N may be smaller than originally requested due to failures
         data = np.array([result for result in results if result is not None])  # N? x T x D
 
         stats = {}
-        columns = results[0].columns  # assume all results output same format
+        columns = results[0].columns  # Assume all results have same format
 
-        # Get shapes
-        T = data.shape[1]
-        D = data.shape[2]
+        # Extract array dimensions for statistics computation
+        T = data.shape[1]  # Time steps
+        D = data.shape[2]  # Variables
 
-        # Make index_columns a set for easy lookup
+        # Convert to set for efficient membership testing
         index_columns = set(index_columns)
 
         stats = {
@@ -195,7 +295,7 @@ class Sim:
             "max_val": np.ndarray((T, D)),
         }
 
-        # If data is 1D, reshape to (N, 1, 1) for consistency
+        # Ensure data has consistent 3D shape for processing
         if data.ndim == 1:
             data = data[:, None, None]
         elif data.ndim == 2:
@@ -203,22 +303,21 @@ class Sim:
 
         for i, output in enumerate(results[0].columns):
 
-            # Add index_columns data, assume this is the same for each sample
-            # These are things like timestamps, weather inputs, etc...
+            # Copy index column data from first result (assumed constant)
             if output in index_columns:
 
                 for key in stats.keys():
                     stats[key][:, i] = data[0, :, i]
 
             else:
-
+                # Compute statistics across simulation runs (axis=0)
                 vals = data[:, :, i]
 
                 stats["ci_low"][:, i] = np.quantile(vals, 0.025, axis=0)
                 stats["ci_high"][:, i] = np.quantile(vals, 0.975, axis=0)
                 stats["mean"][:, i] = np.mean(vals, axis=0)
-                stats["stddev"][:, i] = np.std(vals, axis=0, ddof=1)  # sample stddev
-                stats["stderr"][:, i] = stats["stddev"][:, i] / np.sqrt(vals.shape[0])  # stderr = s / sqrt(n)
+                stats["stddev"][:, i] = np.std(vals, axis=0, ddof=1)  # Sample std dev
+                stats["stderr"][:, i] = stats["stddev"][:, i] / np.sqrt(vals.shape[0])
                 stats["min_val"][:, i] = np.min(vals, axis=0)
                 stats["max_val"][:, i] = np.max(vals, axis=0)
 
@@ -231,6 +330,27 @@ class Sim:
 
     @staticmethod
     def plot_ci(stats: dict[str, list[dict]]):
+        """Plots confidence intervals for simulation outputs over time.
+
+        Creates time series plots showing the mean values and 95% confidence
+        intervals for each output variable. Each plot displays the mean as
+        a line with the confidence interval as a shaded region.
+
+        Args:
+            stats (dict[str, list[dict]]): Dictionary mapping output variable
+                names to lists of statistical dictionaries. Each dictionary
+                should contain "mean" and "95%_ci" keys with corresponding
+                values for each time step.
+
+        Note:
+            This method assumes that the statistics are ordered by time and
+            that each output has consistent time indexing. The plots are
+            displayed using matplotlib.pyplot.show().
+
+        Example:
+            >>> stats_dict = {"biomass": [{"mean": 10, "95%_ci": [8, 12]}, ...]}
+            >>> Sim.plot_ci(stats_dict)
+        """
 
         for output, stat_list in stats.items():
             ci = [s["95%_ci"] for s in stat_list]

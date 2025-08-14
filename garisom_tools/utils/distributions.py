@@ -32,8 +32,8 @@ truncated_dist = TruncatedNormalDistribution(mu=0.5, sigma=0.1, a=0.0, b=1.0)
 
 # Use with optimization
 search_space = {
-    'growth_rate': normal_dist,
-    'water_efficiency': truncated_dist
+    'i_rootBeta': normal_dist,
+    'i_kmaxTree': truncated_dist
 }
 
 # Create SciPy distributions for Monte Carlo
@@ -144,18 +144,18 @@ class TruncatedNormalDistribution(FloatDistribution):
 
     Example:
         ```python
-        # Create truncated normal for efficiency parameter (0 to 1)
-        efficiency_dist = TruncatedNormalDistribution(
-            mu=0.8,        # Prefer higher efficiency
+        # Create truncated normal for rootBeta parameter (0 to 1)
+        rootBeta_dist = TruncatedNormalDistribution(
+            mu=0.8,        # Prefer higher rootBeta
             sigma=0.1,     # Some uncertainty
-            a=0.0,         # Minimum efficiency
-            b=1.0          # Maximum efficiency
+            a=0.0,         # Minimum rootBeta
+            b=1.0          # Maximum rootBeta
         )
 
         # Use in optimization
         search_space = {
-            'water_efficiency': efficiency_dist,
-            'light_efficiency': TruncatedNormalDistribution(0.5, 0.15, 0.0, 1.0)
+            'i_rootBeta': rootBeta_dist,
+            'i_fieldCapPercInit': TruncatedNormalDistribution(0.5, 0.15, 0.0, 1.0)
         }
         ```
 
@@ -237,10 +237,10 @@ def get_scipy_truncated_normal(loc=0.0, scale=1.0, a=1e-12, b=1e12):
         ```python
         # Create truncated normal for Monte Carlo sampling
         dist = get_scipy_truncated_normal(loc=0.5, scale=0.1, a=0.0, b=1.0)
-        
+
         # Generate samples
         samples = dist.rvs(size=1000)
-        
+
         # Compute statistics
         mean = dist.mean()
         var = dist.var()
@@ -269,10 +269,10 @@ def get_scipy_normal(loc=0.0, scale=1.0):
         ```python
         # Create normal distribution
         dist = get_scipy_normal(loc=0.5, scale=0.1)
-        
+
         # Generate samples
         samples = dist.rvs(size=1000)
-        
+
         # Compute PDF at specific points
         pdf_values = dist.pdf([0.4, 0.5, 0.6])
         ```
@@ -298,10 +298,10 @@ def get_scipy_uniform(a=0.0, b=1.0):
         ```python
         # Create uniform distribution over [0.1, 0.9]
         dist = get_scipy_uniform(a=0.1, b=0.9)
-        
+
         # Generate samples
         samples = dist.rvs(size=1000)
-        
+
         # All samples will be in [0.1, 0.9]
         assert all(0.1 <= x <= 0.9 for x in samples)
         ```
