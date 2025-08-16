@@ -2,7 +2,7 @@
 # Sensitivity Analysis
 
 This module provides functionality for conducting sensitivity analysis on
-ecological models to understand parameter importance and model behavior.
+models to understand parameter importance and model behavior.
 
 ## Status
 
@@ -19,11 +19,11 @@ into a reusable class-based structure.
 ## Example Usage (Planned)
 
 ```python
-from garisom_tools.sa import SensitivityAnalysis, SAConfig
+from garisom_tools.sa import SensitivityAnalysis, SensitivityAnalysisConfig
 from garisom_tools import GarisomModel
 
 # Load configuration
-sa_config = SAConfig.from_json('sa_config.json')
+sa_config = SensitivityAnalysisConfig.from_json('sa_config.json')
 
 # Create model instance
 model = GarisomModel(run_kwargs={...})
@@ -32,15 +32,10 @@ model = GarisomModel(run_kwargs={...})
 sa = SensitivityAnalysis(
     model=model,
     config=sa_config,
-    method='sobol'
 )
 
 # Run analysis
-results = sa.run(n_samples=1000)
-
-# Get sensitivity indices
-first_order = results.first_order_indices
-total_order = results.total_order_indices
+sa.run("./results")
 ```
 """
 
