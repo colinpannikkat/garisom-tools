@@ -17,7 +17,7 @@ A comprehensive toolkit for working with the GARISOM ecological model, providing
 - `montecarlo`: Monte Carlo simulation framework
 - `optimization`: Optimization and parameter tuning tools
 - `config`: Configuration management for metrics and parameter spaces
-- 'sa': Sensitivity analysis tools
+- `sa`: Sensitivity analysis tools
 - `utils`: Utility functions for metrics, distributions, and results handling
 
 ## Example Usage
