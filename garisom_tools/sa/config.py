@@ -131,11 +131,11 @@ class SensitivityAnalysisConfig:
 
     problem: SensitivityAnalysisProblem
     metric: MetricConfig
-    workers: int = 4
-    samples: int = 64
     start_day: int
     end_day: int
     pop: int
+    workers: int = 4
+    samples: int = 64
 
     @classmethod
     def from_json(cls, infile: str):
