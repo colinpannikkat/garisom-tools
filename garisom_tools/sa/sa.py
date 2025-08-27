@@ -367,6 +367,7 @@ class SensitivityAnalysis:
         logging.info("Running model with samples.")
         outputs = self.model.run_parallel(
             X=param_samples,
+            workers=self.config.workers,
             **self.model.run_kwargs
         )  # (N, T, Y_D)
         out_names = list({metric.output_name for metric in self.config.metric.metrics})  # unique

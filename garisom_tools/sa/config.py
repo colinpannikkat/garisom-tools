@@ -131,8 +131,8 @@ class SensitivityAnalysisConfig:
 
     problem: SensitivityAnalysisProblem
     metric: MetricConfig
-    workers: int
-    samples: int
+    workers: int = 4
+    samples: int = 64
     start_day: int
     end_day: int
     pop: int
