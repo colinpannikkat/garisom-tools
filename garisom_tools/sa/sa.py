@@ -370,7 +370,15 @@ class SensitivityAnalysis:
             workers=self.config.workers,
             **self.model.run_kwargs
         )  # (N, T, Y_D)
-        out_names = list({metric.output_name for metric in self.config.metric.metrics})  # unique
+
+        # Preserve order and remove duplicates
+        seen = set()
+        out_names = []
+        for metric in self.config.metric.metrics:
+            if metric.output_name not in seen:
+                seen.add(metric.output_name)
+            out_names.append(metric.output_name)
+
         outputs = [output[out_names] for output in outputs]
 
         # Get errors for every sample
