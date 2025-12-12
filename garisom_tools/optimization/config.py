@@ -49,8 +49,8 @@ class OptimizationConfig:
         ```
     """
 
-    space: SpaceConfig = None
-    metric: MetricConfig = None
+    space: SpaceConfig
+    metric: MetricConfig
     num_worker: int = 4
     num_samples: int = 100
 

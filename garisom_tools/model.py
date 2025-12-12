@@ -2,13 +2,12 @@
 # Model Interface and GARISOM Implementation
 
 This module provides abstract base classes and concrete implementations for running
-ecological models, specifically the GARISOM (Growth And Resource Interaction
-Simulation Of Markov) model.
+stomatal-optimization models, specifically the GARISOM (Gain-Risk Stomatal Optimization Model) model.
 
 ## Classes
 
 - `Model`: Abstract base class defining the interface for all models
-- `GarisomModel`: Concrete implementation for the GARISOM ecological model
+- `GarisomModel`: Concrete implementation for the GARISOM model
 
 ## Key Features
 
@@ -16,6 +15,9 @@ Simulation Of Markov) model.
 - **Flexible Configuration**: Customizable run and evaluation parameters
 - **Model Evaluation**: Built-in metrics calculation and comparison with ground truth data
 - **Ray Tune Integration**: Seamless integration with hyperparameter optimization
+- **SALib Integration**: Easy sensitivity analysis and custom configs.
+- **Monte Carlo Simulations**: Integrated Monte Carlo simulation for generating prediction
+    uncertainty intervals.
 
 ## Example Usage
 
@@ -59,7 +61,6 @@ from ray import tune
 import pandas as pd
 import numpy as np
 from typing import Callable, Any
-from numpy.typing import ArrayLike
 from abc import abstractmethod, ABC
 
 # For model evaluation
@@ -79,9 +80,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class Model(ABC):
     """
-    Abstract base class for ecological models.
+    Abstract base class for models.
 
-    This class defines the interface that all ecological models must implement,
+    This class defines the interface that all models must implement,
     providing a standardized way to run simulations, evaluate results, and
     integrate with optimization frameworks like Ray Tune.
 
@@ -105,24 +106,24 @@ class Model(ABC):
     """
     def __init__(
             self,
-            run_kwargs: dict = None,
-            eval_kwargs: dict = None,
+            run_kwargs: dict[str, Any] = {},
+            eval_kwargs: dict[str, Any] = {},
     ):
         """
         Initialize the Model instance.
 
         Args:
             run_kwargs (dict, optional): Keyword arguments for model execution.
-                Defaults to None.
+                Defaults to empty dict.
             eval_kwargs (dict, optional): Keyword arguments for model evaluation.
-                Defaults to None.
+                Defaults to empty dict.
         """
         self.run_kwargs = run_kwargs
         self.eval_kwargs = eval_kwargs
 
     @staticmethod
     @abstractmethod
-    def run_parallel(X: list[dict[str, Any]] = None, *args, **kwargs) -> list[ArrayLike | None]:
+    def run_parallel(X: list[dict[str, Any]] | None = None, *args, **kwargs) -> list[pd.DataFrame | None]:
         """
         Execute the model with multiple parameter sets in parallel.
 
@@ -133,18 +134,18 @@ class Model(ABC):
             **kwargs: Arbitrary keyword arguments passed to individual model runs.
 
         Returns:
-            list[ArrayLike | None]: List of model outputs, one per parameter set.
+            list[pd.DataFrame | None]: List of model outputs, one per parameter set.
                 None values indicate failed model runs.
 
         Note:
             This method should handle parallel execution internally and return
             results in the same order as the input parameter sets.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def run(X: dict[str, Any] = None, *args, **kwargs) -> ArrayLike | None:
+    def run(X: dict[str, Any] | None = None, *args, **kwargs) -> pd.DataFrame | None:
         """
         Execute the model with a single parameter set.
 
@@ -155,18 +156,18 @@ class Model(ABC):
             **kwargs: Arbitrary keyword arguments for model configuration.
 
         Returns:
-            ArrayLike | None: Model output as an array-like object (e.g., pandas DataFrame,
+            pd.DataFrame | None: Model output as an array-like object (e.g., pandas DataFrame,
                 numpy array). Returns None if the model run fails.
 
         Note:
             This method should handle a single model execution and return the
             complete time series or output data.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def launch_model(*args, **kwargs) -> ArrayLike | None:
+    def launch_model(*args, **kwargs) -> pd.DataFrame | None:
         """
         Low-level model execution method.
 
@@ -178,13 +179,13 @@ class Model(ABC):
             **kwargs: Arbitrary keyword arguments for model configuration.
 
         Returns:
-            ArrayLike | None: Raw model output. Returns None if execution fails.
+            pd.DataFrame | None: Raw model output. Returns None if execution fails.
 
         Note:
             This method typically handles file I/O, subprocess management,
             or direct model computation depending on the model implementation.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @abstractmethod
@@ -207,7 +208,7 @@ class Model(ABC):
             Common arguments include model output, ground truth data, and
             evaluation period specifications.
         """
-        pass
+        raise NotImplementedError
 
     def get_objective(
         self
@@ -223,7 +224,7 @@ class Model(ABC):
 
         Example:
             ```python
-            model = GarisomModel(run_kwargs={'config_file': 'config.csv'})
+            model = Model(run_kwargs={'config_file': 'config.csv'})
             objective = model.get_objective()
             result = objective(X={'param1': 0.5})  # config_file is automatically passed
             ```
@@ -260,7 +261,7 @@ class Model(ABC):
             })
 
             # Create callable for Ray Tune
-            model = GarisomModel(run_kwargs={...}, eval_kwargs={...})
+            model = Model(run_kwargs={...}, eval_kwargs={...})
             trainable = model.setup_model_and_return_callable(metric_config)
 
             # Use with Ray Tune
@@ -290,10 +291,17 @@ class Model(ABC):
 
 class GarisomModel(Model):
     """
-    Concrete implementation of the Model interface for the GARISOM ecological model.
+    Concrete implementation of the Model interface for the GARISOM model.
 
-    The GarisomModel class provides functionality to run the GARISOM (Gain Risk Stomatal Optimization) 
-    ecological model, which simulates plant growth, resource allocation, and environmental interactions.
+    The GarisomModel class provides functionality to run the GARISOM (Gain Risk Stomatal Optimization)
+    model. Information on the model can be found in:
+
+    - Sperry JS, Venturas MD, Anderegg WRL, Mencuccini M, Mackay DS, Wang Y, Love DM. 2017.
+        Predicting stomatal responses to the environment from the optimization of photosynthetic gain and
+        hydraulic cost. Plant, Cell & Environment 40: 816-830.
+    - Venturas MD, Sperry JS, Love DM, Frehner EH, Allred MG, Wang Y, Anderegg WRL. 2018.
+        A stomatal control model based on optimization of carbon gain versus hydraulic risk predicts aspen sapling
+        responses to drought. New Phytologist 220: 836-850.
 
     This implementation:
     - Runs GARISOM as a subprocess using parameter and configuration files
@@ -344,8 +352,8 @@ class GarisomModel(Model):
     """
     def __init__(
             self,
-            run_kwargs: dict = None,
-            eval_kwargs: dict = None
+            run_kwargs: dict[str, Any] = {},
+            eval_kwargs: dict[str, Any] = {}
     ):
         """
         Initialize the GarisomModel instance.
@@ -374,7 +382,7 @@ class GarisomModel(Model):
         population: int,
         model_dir: str,
         workers: int = 4,
-        X: list[dict[str, float]] = None,
+        X: list[dict[str, float]] | None = None,
         **kwargs
     ) -> list[pd.DataFrame | None]:
         """
@@ -435,8 +443,8 @@ class GarisomModel(Model):
             - Each worker uses a temporary directory for file I/O
         """
 
-        N = len(X)
-        res = [None for _ in range(N)]  # Ensure that we have an accessible index
+        N = len(X) if X else 0
+        res: list[pd.DataFrame | None] = [None for _ in range(N)]  # Ensure that we have an accessible index
 
         pbar = tqdm(total=N)
 
@@ -456,7 +464,7 @@ class GarisomModel(Model):
 
             for future in as_completed(futures):
                 pbar.update(1)
-                idx = futures[future]
+                idx = futures[future]  # could run into race condition if future == None
                 try:
                     out = future.result()
                     res[idx] = out
@@ -473,7 +481,7 @@ class GarisomModel(Model):
         config_file: str,
         population: int,
         model_dir: str,
-        X: dict[str, float] = None,
+        X: dict[str, float] | None = None,
         **kwargs
     ) -> pd.DataFrame | None:
         """
@@ -664,9 +672,9 @@ class GarisomModel(Model):
                 f"Expected output file not found: {output_file}"
             )
 
-        out = pd.read_csv(output_file)
+        out_file = pd.read_csv(output_file)
 
-        return out
+        return out_file
 
     @staticmethod
     def evaluate_model(
@@ -742,7 +750,7 @@ class GarisomModel(Model):
         metrics = metric_config.metrics
         modes = metric_config.modes
 
-        errors = {}
+        errors: dict[str, np.typing.ArrayLike] = {}
         for idx, (metric, mode) in enumerate(zip(metrics, modes)):
 
             output_name = metric.output_name

@@ -10,7 +10,7 @@ authors = [
     { name = "Colin Pannikkat", email = "colinpannikkat@gmail.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8,<3.14"
 dependencies = [
     "numpy",
     "pandas",

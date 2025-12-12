@@ -52,7 +52,7 @@ import json
 import os
 
 
-EvalResults = dict[np.ndarray]
+EvalResults = dict[str, np.typing.ArrayLike]
 """Type alias for evaluation results dictionary mapping metric names to values."""
 
 
@@ -157,7 +157,7 @@ class ParamResults(dict[str, MetricResult]):
                 'trial_1': MetricResult(...),
                 'trial_2': MetricResult(...)
             })
-            
+
             results.to_json('experiment_results.json')
             ```
 

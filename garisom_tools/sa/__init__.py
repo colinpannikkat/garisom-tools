@@ -2,21 +2,15 @@
 # Sensitivity Analysis
 
 This module provides functionality for conducting sensitivity analysis on
-models to understand parameter importance and model behavior.
+models to understand parameter importance and model behavior. Only Sobol sensitivity
+analysis is supported.
 
-## Status
-
-This module is currently under development. The sensitivity analysis
-functionality is being ported from the original SA.py implementation
-into a reusable class-based structure.
-
-## Planned Components
+## Components
 
 - `SensitivityAnalysis`: Main class for conducting sensitivity analysis
-- `SobolAnalysis`: Sobol sensitivity indices calculation
-- `SAConfig`: Configuration for sensitivity analysis experiments
+- `SensitivityAnalysisConfig`: Configuration for sensitivity analysis experiments
 
-## Example Usage (Planned)
+## Example Usage
 
 ```python
 from garisom_tools.sa import SensitivityAnalysis, SensitivityAnalysisConfig
