@@ -75,8 +75,8 @@ class MonteCarloConfig:
         ```
     """
 
-    space: SpaceConfig = None
-    outputs: list[str] = None
+    space: SpaceConfig
+    outputs: list[str]
     num_worker: int = 4
     num_samples: int = 100
 

@@ -137,7 +137,7 @@ class Optimizer():
         Example:
             >>> optimizer = Optimizer(model, config)
             >>> results = optimizer.run()
-            >>> best_params = results.get_best_for_metric("accuracy")
+            >>> rmse_res = results['rsme']
         """
         self.results = self.tuner.fit()
         metric_and_modes = zip(

@@ -62,11 +62,12 @@ The GARISOM/Sperry model was originally published in the following papers. If yo
 this package in your work, please cite the following.
 
 [1] Sperry JS, Venturas MD, Anderegg WRL, Mencuccini M, Mackay DS, Wang Y, Love DM. 2017.
-    Predicting stomatal responses to the environment from the optimization of photosynthetic gain and hydraulic cost. Plant, Cell & Environment 40: 816-830.
+    Predicting stomatal responses to the environment from the optimization of photosynthetic gain and hydraulic cost.
+    Plant, Cell & Environment 40: 816-830.
 
 [2] Venturas MD, Sperry JS, Love DM, Frehner EH, Allred MG, Wang Y, Anderegg WRL. 2018.
-    A stomatal control model based on optimization of carbon gain versus hydraulic risk predicts aspen sapling responses to drought. New Phytologist 220: 836-850.
-
+    A stomatal control model based on optimization of carbon gain versus hydraulic risk predicts aspen sapling
+    responses to drought. New Phytologist 220: 836-850.
 """
 
 from .model import *

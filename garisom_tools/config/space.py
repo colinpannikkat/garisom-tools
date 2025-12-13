@@ -33,7 +33,6 @@ search_space = space_config.get_search_space()
 """
 
 from optuna.distributions import BaseDistribution
-from typing import Callable
 
 from dataclasses import dataclass
 
@@ -130,7 +129,7 @@ class SpaceConfig(dict[str, SampleSpace]):
     """
 
     @classmethod
-    def from_dict(cls, mapping: dict[str, Callable], data: dict):
+    def from_dict(cls, mapping: dict[str, BaseDistribution], data: dict):
         """
         Create a SpaceConfig from a distribution mapping and configuration data.
 
