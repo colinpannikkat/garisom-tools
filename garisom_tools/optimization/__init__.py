@@ -2,7 +2,7 @@
 # Optimization Framework
 
 This module provides Bayesian optimization and hyperparameter tuning capabilities
-for ecological models using Ray Tune and Optuna.
+for models using Ray Tune and Optuna.
 
 ## Components
 

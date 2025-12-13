@@ -25,16 +25,22 @@ Limitations:
 References:
     - Saltelli, A., et al. (2008). Global Sensitivity Analysis: The Primer
     - Sobol, I.M. (2001). Global sensitivity indices for nonlinear mathematical models
+    - Iwanaga, T., Usher, W., & Herman, J. (2022). Toward SALib 2.0: Advancing the accessibility and interpretability
+    of global sensitivity analyses. Socio-Environmental Systems Modelling, 4, 18155. doi:10.18174/sesmo.18155
+    - Herman, J. and Usher, W. (2017) SALib: An open-source Python library for sensitivity analysis. Journal of Open
+    Source Software, 2(9). doi:10.21105/joss.00097
+
 
 Typical usage example:
+```python
+from garisom_tools.sa import SensitivityAnalysis, SensitivityAnalysisConfig
+from garisom_tools import Model
 
-    from garisom_tools.sa import SensitivityAnalysis, SensitivityAnalysisConfig
-    from garisom_tools import Model
-
-    model = Model()
-    config = SensitivityAnalysisConfig.from_json("sa_config.json")
-    sa = SensitivityAnalysis(model, config)
-    sa.run("output_directory")
+model = Model()
+config = SensitivityAnalysisConfig.from_json("sa_config.json")
+sa = SensitivityAnalysis(model, config)
+sa.run("output_directory")
+```
 """
 
 # Model and config
@@ -169,7 +175,7 @@ class SensitivityAnalysis:
     def _get_errors(
         self,
         output
-    ):
+    ) -> dict[str, list]:
         """Compute error metrics for each model output sample.
 
         Evaluates the model outputs against configured metrics to compute
@@ -215,7 +221,7 @@ class SensitivityAnalysis:
         self,
         output: np.ndarray,  # shape: (N, T, Y_D)
         out_names: list[str],
-        errors: dict[list],
+        errors: dict[str, list],
         problem: SensitivityAnalysisProblem,
         res_dir: str = "."
     ):
@@ -379,7 +385,7 @@ class SensitivityAnalysis:
                 seen.add(metric.output_name)
             out_names.append(metric.output_name)
 
-        outputs = [output[out_names] for output in outputs]
+        outputs = [output[out_names] if output is not None else None for output in outputs]
 
         # Get errors for every sample
         errors = self._get_errors(outputs)

@@ -1,8 +1,8 @@
 """
 # Monte Carlo Simulations
 
-This module provides functionality for running Monte Carlo simulations with
-ecological models, including uncertainty quantification and sensitivity analysis.
+This module provides functionality for running Monte Carlo simulations with models,
+including uncertainty prediction and sensitivity analysis.
 
 ## Components
 

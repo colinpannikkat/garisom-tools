@@ -5,9 +5,8 @@ various quasi-random sampling engines including Sobol sequences, Latin
 Hypercube sampling, and Halton sequences. It supports parallel execution
 and provides statistical analysis of simulation results.
 
-The module integrates with the Garisom modeling framework to enable
-uncertainty quantification and sensitivity analysis through systematic
-parameter space exploration.
+The module integrates with the modeling framework to enable uncertainty estimation
+and sensitivity analysis given a parameter space.
 
 Typical usage example:
 
@@ -137,6 +136,8 @@ class Sim:
                 return qmc.LatinHypercube(**kwargs)
             case 'halton':
                 return qmc.Halton(**kwargs)
+            case _:
+                raise Exception("Not a valid engine configuration.")
 
     def _sample_from_space(self, n: int, workers: int) -> list[dict[str, float]]:
         """Generates parameter samples from the defined search space.
@@ -188,8 +189,8 @@ class Sim:
         n: int = 1000,
         parallel: bool = True,
         workers: int = 4,
-        X: dict[str, float] = None
-    ) -> list[pd.DataFrame]:
+        X: dict[str, float] | None = None
+    ) -> list[pd.DataFrame | None]:
         """Executes the Monte Carlo simulation.
 
         Generates parameter samples and runs the model for each sample,
@@ -278,7 +279,17 @@ class Sim:
         data = np.array([result for result in results if result is not None])  # N? x T x D
 
         stats = {}
-        columns = results[0].columns  # Assume all results have same format
+
+        columns = None
+        i = 0
+        while i < len(results):
+            if results[i] is not None:
+                columns = results[i].columns  # Assume all results have same format
+                break
+            i += 1
+
+        if columns is None:
+            raise ValueError("No valid results found to extract columns.")
 
         # Extract array dimensions for statistics computation
         T = data.shape[1]  # Time steps
@@ -303,7 +314,7 @@ class Sim:
         elif data.ndim == 2:
             data = data[:, :, None]
 
-        for i, output in enumerate(results[0].columns):
+        for i, output in enumerate(columns):
 
             # Copy index column data from first result (assumed constant)
             if output in index_columns:

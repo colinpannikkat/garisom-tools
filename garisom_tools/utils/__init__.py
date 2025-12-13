@@ -18,7 +18,7 @@ from garisom_tools.utils.distributions import NormalDistribution
 from garisom_tools.utils.results import EvalResults, MetricResult
 
 # Create custom metric
-nse_metric = Metric('nse', 'streamflow', nash_sutcliffe_efficiency)
+nse_metric = Metric('nse', 'leaftemp.a', nash_sutcliffe_efficiency)
 
 # Use custom distribution
 normal_dist = NormalDistribution(mu=0.5, sigma=0.1)

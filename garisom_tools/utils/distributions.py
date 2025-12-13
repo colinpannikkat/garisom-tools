@@ -105,9 +105,9 @@ class NormalDistribution(FloatDistribution):
         """Check if distribution represents a single value."""
         return False
 
-    def _contains(self, param):
+    def _contains(self, param_value_in_internal_repr):
         """Check if parameter is within valid range."""
-        return isinstance(param, float) and self.low <= param <= self.high
+        return isinstance(param_value_in_internal_repr, float) and self.low <= param_value_in_internal_repr <= self.high
 
     def _sample(self, rng):
         """Sample from the normal distribution using inverse transform."""
@@ -116,16 +116,16 @@ class NormalDistribution(FloatDistribution):
         # Transform to normal
         return self.mu + self.sigma * ndtri(p)
 
-    def to_internal_repr(self, param):
+    def to_internal_repr(self, param_value_in_external_repr):
         """Transform normal value to internal uniform representation."""
         # Transform normal value back to uniform p for internal sampler state
-        p = norm.cdf(param, loc=self.mu, scale=self.sigma)
+        p = norm.cdf(param_value_in_external_repr, loc=self.mu, scale=self.sigma).item()
         return p
 
-    def to_external_repr(self, internal_param):
+    def to_external_repr(self, param_value_in_internal_repr):
         """Transform internal uniform value to normal value."""
         # Transform uniform p to normal value
-        return self.mu + self.sigma * ndtri(internal_param)
+        return self.mu + self.sigma * ndtri(param_value_in_internal_repr)
 
 
 class TruncatedNormalDistribution(FloatDistribution):
@@ -193,9 +193,9 @@ class TruncatedNormalDistribution(FloatDistribution):
         """Check if distribution represents a single value."""
         return False
 
-    def _contains(self, param):
+    def _contains(self, param_value_in_internal_repr):
         """Check if parameter is within truncation bounds."""
-        return isinstance(param, float) and self.a <= param <= self.b
+        return isinstance(param_value_in_internal_repr, float) and self.a <= param_value_in_internal_repr <= self.b
 
     def _sample(self, rng):
         """Sample from truncated normal using inverse CDF."""
@@ -204,16 +204,16 @@ class TruncatedNormalDistribution(FloatDistribution):
         # Sample from truncated normal using inverse CDF
         return truncnorm.ppf(p, self._a_std, self._b_std, loc=self.mu, scale=self.sigma)
 
-    def to_internal_repr(self, param):
+    def to_internal_repr(self, param_value_in_external_repr):
         """Transform truncated normal value to internal uniform representation."""
         # Map external value to internal uniform p
-        p = truncnorm.cdf(param, self._a_std, self._b_std, loc=self.mu, scale=self.sigma)
+        p = truncnorm.cdf(param_value_in_external_repr, self._a_std, self._b_std, loc=self.mu, scale=self.sigma).item()
         return min(max(p, self.low), self.high)
 
-    def to_external_repr(self, internal_param):
+    def to_external_repr(self, param_value_in_internal_repr):
         """Transform internal uniform value to truncated normal value."""
         # Map internal uniform p to truncated normal value
-        return truncnorm.ppf(internal_param, self._a_std, self._b_std, loc=self.mu, scale=self.sigma)
+        return truncnorm.ppf(param_value_in_internal_repr, self._a_std, self._b_std, loc=self.mu, scale=self.sigma)
 
 
 def get_scipy_truncated_normal(loc=0.0, scale=1.0, a=1e-12, b=1e12):

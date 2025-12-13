@@ -3,7 +3,7 @@
 
 This module provides evaluation metrics and performance measures for comparing
 model predictions with ground truth observations. It includes standard metrics
-from scikit-learn as well as custom ecological modeling metrics.
+from scikit-learn as well as custom modeling metrics.
 
 ## Functions
 

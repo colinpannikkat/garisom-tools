@@ -49,8 +49,8 @@ class OptimizationConfig:
         ```
     """
 
-    space: SpaceConfig = None
-    metric: MetricConfig = None
+    space: SpaceConfig
+    metric: MetricConfig
     num_worker: int = 4
     num_samples: int = 100
 
@@ -134,8 +134,8 @@ class GarisomOptimizationConfig(OptimizationConfig):
     """Specialized optimization configuration for Garisom model optimization.
 
     Extends the base OptimizationConfig with additional parameters specific
-    to Garisom ecosystem model optimization. Includes population-level settings
-    and temporal constraints for optimization runs.
+    to GARISOM model. Includes population-level settings and temporal constraints
+    for optimization runs.
 
     Attributes:
         population (int): Population identifier or size parameter for the optimization.

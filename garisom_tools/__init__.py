@@ -1,9 +1,9 @@
 """
-# Garisom Tools
+# GARISOM Tools
 
-A comprehensive toolkit for working with the GARISOM ecological model, providing functionality for:
+A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#citation), providing functionality for:
 
-- **Model Interface**: Abstract base classes and concrete implementations for running GARISOM simulations
+- **Model Interface**: Abstract base classes and concrete implementation for running GARISOM simulations
 - **Monte Carlo Simulations**: Tools for uncertainty quantification and sensitivity analysis
 - **Optimization**: Bayesian optimization and hyperparameter tuning capabilities
 - **Configuration Management**: Flexible configuration systems for metrics, parameter spaces, and distributions
@@ -12,13 +12,20 @@ A comprehensive toolkit for working with the GARISOM ecological model, providing
 
 ## Main Components
 
-- `Model`: Base classes for model execution and evaluation
-- `GarisomModel`: Concrete implementation for GARISOM ecological model
+- `Model`: Base classes for model execution and evaluation. Enables users to easily
+    derive new model classes and use the existing API with their custom models.
+- `GarisomModel`: Concrete implementation for interfacing with the GARISOM/Sperry model
 - `montecarlo`: Monte Carlo simulation framework
 - `optimization`: Optimization and parameter tuning tools
 - `config`: Configuration management for metrics and parameter spaces
 - `sa`: Sensitivity analysis tools
 - `utils`: Utility functions for metrics, distributions, and results handling
+
+## Planned Additions
+- More stomatal optimization models
+- Supporting multiple years
+- Better tests
+- Build in default parameter and configuration files
 
 ## Example Usage
 
@@ -48,6 +55,19 @@ results = sim.run(n=1000, parallel=True)
 optimizer = Optimizer(model, opt_config)
 best_params = optimizer.run()
 ```
+
+## Citations
+
+The GARISOM/Sperry model was originally published in the following papers. If you use
+this package in your work, please cite the following.
+
+[1] Sperry JS, Venturas MD, Anderegg WRL, Mencuccini M, Mackay DS, Wang Y, Love DM. 2017.
+    Predicting stomatal responses to the environment from the optimization of photosynthetic gain and hydraulic cost.
+    Plant, Cell & Environment 40: 816-830.
+
+[2] Venturas MD, Sperry JS, Love DM, Frehner EH, Allred MG, Wang Y, Anderegg WRL. 2018.
+    A stomatal control model based on optimization of carbon gain versus hydraulic risk predicts aspen sapling
+    responses to drought. New Phytologist 220: 836-850.
 """
 
 from .model import *
