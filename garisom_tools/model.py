@@ -121,9 +121,9 @@ class Model(ABC):
         self.run_kwargs = run_kwargs
         self.eval_kwargs = eval_kwargs
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def run_parallel(X: list[dict[str, Any]] | None = None, *args, **kwargs) -> list[pd.DataFrame | None]:
+    def run_parallel(cls, X: list[dict[str, Any]] | None = None, *args, **kwargs) -> list[pd.DataFrame | None]:
         """
         Execute the model with multiple parameter sets in parallel.
 
@@ -143,9 +143,9 @@ class Model(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def run(X: dict[str, Any] | None = None, *args, **kwargs) -> pd.DataFrame | None:
+    def run(cls, X: dict[str, Any] | None = None, *args, **kwargs) -> pd.DataFrame | None:
         """
         Execute the model with a single parameter set.
 
@@ -165,9 +165,9 @@ class Model(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def launch_model(*args, **kwargs) -> pd.DataFrame | None:
+    def launch_model(cls, *args, **kwargs) -> pd.DataFrame | None:
         """
         Low-level model execution method.
 
@@ -187,9 +187,9 @@ class Model(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def evaluate_model(*args, **kwargs) -> EvalResults:
+    def evaluate_model(cls, *args, **kwargs) -> EvalResults:
         """
         Evaluate model output against ground truth data.
 
@@ -375,8 +375,9 @@ class GarisomModel(Model):
         """
         super().__init__(run_kwargs=run_kwargs, eval_kwargs=eval_kwargs)
 
-    @staticmethod
+    @classmethod
     def run_parallel(
+        cls,
         params: pd.DataFrame,
         config_file: str,
         population: int,
@@ -451,7 +452,7 @@ class GarisomModel(Model):
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
                 executor.submit(
-                    GarisomModel.run,
+                    cls.run,
                     params,
                     config_file,
                     population,
@@ -475,8 +476,9 @@ class GarisomModel(Model):
 
         return res
 
-    @staticmethod
+    @classmethod
     def run(
+        cls,
         params: pd.DataFrame,
         config_file: str,
         population: int,
@@ -557,7 +559,7 @@ class GarisomModel(Model):
 
             params.to_csv(TMP_PARAM_FILE, index=False)
 
-            output = GarisomModel.launch_model(
+            output = cls.launch_model(
                 model_dir=model_dir,
                 param_file=TMP_PARAM_FILE,
                 config_file=config_file,
@@ -568,8 +570,9 @@ class GarisomModel(Model):
 
         return output
 
-    @staticmethod
+    @classmethod
     def launch_model(
+        cls,
         model_dir: str,
         param_file: str,
         config_file: str,
@@ -649,8 +652,8 @@ class GarisomModel(Model):
                 save_location
             ],
             cwd=model_dir,
-            stdout=out,
-            stderr=err
+            stdout=out if not verbose else None,
+            stderr=err if not verbose else None
         )
 
         if p.returncode != 0:
@@ -676,8 +679,9 @@ class GarisomModel(Model):
 
         return out_file
 
-    @staticmethod
+    @classmethod
     def evaluate_model(
+        cls,
         output,
         ground,
         metric_config: MetricConfig,
@@ -743,7 +747,6 @@ class GarisomModel(Model):
             - Failed model runs (output=None) receive penalty values (1e20 for min, -1e20 for max)
             - Supports multiple metrics on the same output variable using suffix notation (e.g., 'var.A', 'var.B')
         """
-
         out_names = [metric.output_name for metric in metric_config.metrics]
         pred = output[out_names].to_numpy(dtype=float) if output is not None else None
 
@@ -757,8 +760,8 @@ class GarisomModel(Model):
             optim_name = metric.name
             eval_func = metric.func
 
-            if pred is None:
-                err = 1e20 if mode == 'min' else -1e20
+            if pred is None or eval_func is None:
+                err = 1e20 if mode == 'min' else -1e20 if mode == "max" else 0
             else:
                 # Filter ground data based on julian-day and drop NaN values
                 col_ground = ground[
