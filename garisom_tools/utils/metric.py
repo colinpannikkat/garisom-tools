@@ -31,7 +31,7 @@ rmse_metric = Metric.from_name('rmse', 'leaftemp')
 # Use metric function directly
 predictions = np.array([1.0, 2.0, 3.0])
 observations = np.array([1.1, 1.9, 3.2])
-nse_value = nash_sutcliffe_efficiency(predictions, observations)
+nse_value = nash_sutcliffe_efficiency(observations, predictions)
 
 # Optimization modes
 min_mode = Mode.from_name('min')  # For RMSE, MSE
@@ -54,7 +54,7 @@ from sklearn.metrics import (
 )
 
 
-def nash_sutcliffe_efficiency(predictions, targets):
+def nash_sutcliffe_efficiency(targets, predictions):
     """
     Nash-Sutcliffe model efficiency coefficient.
 
@@ -63,8 +63,8 @@ def nash_sutcliffe_efficiency(predictions, targets):
     variance. NSE ranges from -∞ to 1, where 1 indicates perfect agreement.
 
     Args:
-        predictions (array-like): Model predicted values.
         targets (array-like): Observed/ground truth values.
+        predictions (array-like): Model predicted values.
 
     Returns:
         float: Nash-Sutcliffe efficiency coefficient.
@@ -82,7 +82,7 @@ def nash_sutcliffe_efficiency(predictions, targets):
         observed = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         predicted = np.array([1.1, 1.9, 3.2, 3.8, 5.1])
 
-        nse = nash_sutcliffe_efficiency(predicted, observed)
+        nse = nash_sutcliffe_efficiency(observed, predicted)
         print(f"Nash-Sutcliffe Efficiency: {nse:.3f}")
         ```
 
@@ -94,7 +94,7 @@ def nash_sutcliffe_efficiency(predictions, targets):
     return 1 - (np.sum((targets - predictions) ** 2) / np.sum((targets - np.mean(targets)) ** 2))
 
 
-def normalized_nash_sutcliffe_efficiency(predictions, targets):
+def normalized_nash_sutcliffe_efficiency(targets, predictions):
     """
     Normalized Nash-Sutcliffe model efficiency coefficient.
 
@@ -102,8 +102,8 @@ def normalized_nash_sutcliffe_efficiency(predictions, targets):
     making it easier to interpret and compare across different models and datasets.
 
     Args:
-        predictions (array-like): Model predicted values.
         targets (array-like): Observed/ground truth values.
+        predictions (array-like): Model predicted values.
 
     Returns:
         float: Normalized Nash-Sutcliffe efficiency coefficient (0 to 1).
@@ -121,7 +121,7 @@ def normalized_nash_sutcliffe_efficiency(predictions, targets):
         observed = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         predicted = np.array([1.1, 1.9, 3.2, 3.8, 5.1])
 
-        nnse = normalized_nash_sutcliffe_efficiency(predicted, observed)
+        nnse = normalized_nash_sutcliffe_efficiency(observed, predicted)
         print(f"Normalized NSE: {nnse:.3f}")
         ```
 
@@ -129,7 +129,7 @@ def normalized_nash_sutcliffe_efficiency(predictions, targets):
         This normalization is useful when NSE values are very negative,
         as it constrains the metric to a bounded range.
     """
-    return 1 / (2 - nash_sutcliffe_efficiency(predictions, targets))
+    return 1 / (2 - nash_sutcliffe_efficiency(targets, predictions))
 
 
 @dataclass
@@ -165,7 +165,7 @@ class Metric:
     """
     name: str
     output_name: str
-    func: Callable
+    func: Callable | None
 
     @staticmethod
     def from_name(metric_name: str, optim_name: str) -> "Metric":
@@ -214,18 +214,9 @@ class Metric:
             which is useful when optimizing multiple aspects of model performance
             or when using different evaluation periods.
         """
-        mapping = {
-            "mse": MSE,
-            "rmse": RMSE,
-            "r2": R2,
-            "mape": MAPE,
-            "made": MADE,
-            "nnse": NNSE,
-            "nse": NSE
-        }
 
         # Get metric class
-        metric_cls = mapping.get(metric_name.lower())
+        metric_cls = _MAPPING.get(metric_name.lower())
         if metric_cls is None:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
@@ -366,6 +357,14 @@ class NSE(Metric):
         super().__init__(name=name, output_name=output_name, func=normalized_nash_sutcliffe_efficiency)
 
 
+class EMPTY(Metric):
+    """
+    Empty metric.
+    """
+    def __init__(self, output_name: str, name: str = "none"):
+        super().__init__(name=name, output_name=output_name, func=None)
+
+
 # Evaluation Modes
 class Mode(str, Enum):
     """
@@ -397,6 +396,7 @@ class Mode(str, Enum):
     """
     MAX = "max"
     MIN = "min"
+    NONE = "none"
 
     @staticmethod
     def from_name(name: str) -> "Mode":
@@ -425,3 +425,19 @@ class Mode(str, Enum):
             return Mode(name.lower())
         except ValueError:
             raise ValueError(f"Unknown mode: {name}")
+
+
+_MAPPING = {
+    "mse": MSE,
+    "rmse": RMSE,
+    "r2": R2,
+    "mape": MAPE,
+    "made": MADE,
+    "nnse": NNSE,
+    "nse": NSE,
+    "none": EMPTY
+}
+
+
+def get_mapping_dict():
+    return _MAPPING
