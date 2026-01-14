@@ -375,7 +375,9 @@ class SensitivityAnalysis:
             X=param_samples,
             workers=self.config.workers,
             **self.model.run_kwargs
-        )  # (N, T, Y_D)
+        )  # (N, T, ...)
+
+        np.save(f"{res_dir}/full_model_output.npy", np.array(outputs))
 
         # Preserve order and remove duplicates
         seen = set()
@@ -385,14 +387,14 @@ class SensitivityAnalysis:
                 seen.add(metric.output_name)
             out_names.append(metric.output_name)
 
-        outputs = [output[out_names] if output is not None else None for output in outputs]
-
         # Get errors for every sample
         errors = self._get_errors(outputs)
 
         # Save errors
         with open(os.path.join(res_dir, "errors.json"), "w") as f:
             json.dump(errors, f, indent=4)
+
+        outputs = [output[out_names] if output is not None else None for output in outputs]
 
         # Convert to numpy for easy slicing
         outputs = np.array(outputs)  # (N, T, Y_D)
