@@ -20,6 +20,7 @@ Typical usage example:
 from dataclasses import dataclass, asdict
 from ..config.metric import MetricConfig
 import json
+from typing import Optional
 
 
 @dataclass
@@ -33,6 +34,8 @@ class SensitivityAnalysisProblem:
     The problem definition includes parameter names, bounds, and dimensionality
     information needed for proper sensitivity analysis setup.
 
+    For more info see: https://salib.readthedocs.io/en/latest/user_guide/advanced.html
+
     Attributes:
         num_vars (int): Number of variables (parameters) in the problem.
             Must match the length of names and bounds lists.
@@ -42,6 +45,14 @@ class SensitivityAnalysisProblem:
         bounds (list[list[float]]): List of [min, max] bounds for each
             parameter. Each inner list contains exactly two floats representing
             the lower and upper bounds for the corresponding parameter.
+        dists (list[str], optional): Specifies the distribution for each parameter bound.
+            Options include:
+            - unif (default)
+            - logunif
+            - triang
+            - norm
+            - truncnorm
+            - lognorm
 
     Example:
         ```python
@@ -57,6 +68,7 @@ class SensitivityAnalysisProblem:
     num_vars: int
     names: list[str]
     bounds: list[list[float]]
+    dists: Optional[list[str]]
 
     def to_dict(self):
         """Convert the problem definition to a dictionary format.
