@@ -377,6 +377,17 @@ class SensitivityAnalysis:
             **self.model.run_kwargs
         )  # (N, T, ...)
 
+        if any(o is None for o in outputs):  # ensure that no crashes occured that can bias Sobol sample
+            # Identify and log samples causing None outputs
+            none_indices = [i for i, o in enumerate(outputs) if o is None]
+            none_samples = [param_samples[i] for i in none_indices]
+            logging.error(f"Samples causing None outputs: {none_samples}")
+            raise SystemExit(
+                "Error: Model outputs contain None values. Please check your model configuration or parameter bounds."
+            )
+
+        outputs = [output for output in outputs if output is not None]  # just to prevent type errors
+
         np.save(f"{res_dir}/full_model_output.npy", np.array(outputs))
 
         # Preserve order and remove duplicates
@@ -394,7 +405,7 @@ class SensitivityAnalysis:
         with open(os.path.join(res_dir, "errors.json"), "w") as f:
             json.dump(errors, f, indent=4)
 
-        outputs = [output[out_names] if output is not None else None for output in outputs]
+        outputs = [output[out_names] for output in outputs]
 
         # Convert to numpy for easy slicing
         outputs = np.array(outputs)  # (N, T, Y_D)
