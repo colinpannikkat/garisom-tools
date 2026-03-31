@@ -14,7 +14,7 @@ A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#
 
 - `Model`: Base classes for model execution and evaluation. Enables users to easily
     derive new model classes and use the existing API with their custom models.
-- `GarisomModel`: Concrete implementation for interfacing with the GARISOM/Sperry model
+- `SperryModel`: Concrete implementation for interfacing with the Sperry gain-risk model
 - `montecarlo`: Monte Carlo simulation framework
 - `optimization`: Optimization and parameter tuning tools
 - `config`: Configuration management for metrics and parameter spaces
@@ -25,12 +25,12 @@ A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#
 - More stomatal optimization models
 - Supporting multiple years
 - Better tests
-- Build in default parameter and configuration files
+- Built in default parameter and configuration files
 
 ## Example Usage
 
 ```python
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 from garisom_tools.montecarlo import Sim, MonteCarloConfig
 from garisom_tools.optimization import Optimizer, OptimizationConfig
 from garisom_tools.sa import SensitivityAnalysis, SensitivityAnalysisConfig
@@ -41,7 +41,7 @@ opt_config = OptimizationConfig.from_json("opt_config.json")
 sa_config = SensitivityAnalysisConfig.from_json("sa_config.json")
 
 # Create model instance
-model = GarisomModel(run_kwargs={...}, eval_kwargs={...})
+model = SperryModel(run_kwargs={...}, eval_kwargs={...})
 
 # Run Sensitivity Analysis
 sa = SensitivityAnalysis(model, sa_config)
@@ -58,8 +58,8 @@ best_params = optimizer.run()
 
 ## Citations
 
-The GARISOM/Sperry model was originally published in the following papers. If you use
-this package in your work, please cite the following.
+The Sperry model was originally published in the following papers. If you use
+the model in your work, please cite the following.
 
 [1] Sperry JS, Venturas MD, Anderegg WRL, Mencuccini M, Mackay DS, Wang Y, Love DM. 2017.
     Predicting stomatal responses to the environment from the optimization of photosynthetic gain and hydraulic cost.

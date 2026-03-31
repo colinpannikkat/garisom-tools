@@ -1,13 +1,14 @@
 """
-# Model Interface and GARISOM Implementation
+# Model Interface and Sperry Interface Implementation
 
 This module provides abstract base classes and concrete implementations for running
-stomatal-optimization models, specifically the GARISOM (Gain-Risk Stomatal Optimization Model) model.
+stomatal-optimization models, specifically the Sperry (Gain-Risk Stomatal Optimization Model from Sperry et al. 2017) 
+model.
 
 ## Classes
 
 - `Model`: Abstract base class defining the interface for all models
-- `GarisomModel`: Concrete implementation for the GARISOM model
+- `SperryModel`: Concrete interface implementation for the Sperry model
 
 ## Key Features
 
@@ -22,16 +23,17 @@ stomatal-optimization models, specifically the GARISOM (Gain-Risk Stomatal Optim
 ## Example Usage
 
 ```python
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 from garisom_tools.config import MetricConfig
 import pandas as pd
+from datetime import datetime
 
 # Load parameters and configuration
 params = pd.read_csv("parameters.csv")
 config_file = "model_config.csv"
 
 # Create model instance
-model = GarisomModel(
+model = SperryModel(
     run_kwargs={
         'params': params,
         'config_file': config_file,
@@ -40,8 +42,8 @@ model = GarisomModel(
     },
     eval_kwargs={
         'ground': ground_truth_data,
-        'start_day': 180,
-        'end_day': 250
+        'start_date': datetime(2023, 7, 20),
+        'end_date': datetime(2023, 8, 24)
     }
 )
 
@@ -68,6 +70,7 @@ import os
 import subprocess
 from tempfile import TemporaryDirectory
 from functools import partial
+from datetime import datetime
 
 # Optimizer stuff
 from garisom_tools.config import MetricConfig
@@ -289,11 +292,11 @@ class Model(ABC):
         return wrapped_model
 
 
-class GarisomModel(Model):
+class SperryModel(Model):
     """
-    Concrete implementation of the Model interface for the GARISOM model.
+    Concrete implementation of the Model interface for the Sperry model.
 
-    The GarisomModel class provides functionality to run the GARISOM (Gain Risk Stomatal Optimization)
+    The SperryModel class provides functionality to run the Sperry (Gain Risk Stomatal Optimization)
     model. Information on the model can be found in:
 
     - Sperry JS, Venturas MD, Anderegg WRL, Mencuccini M, Mackay DS, Wang Y, Love DM. 2017.
@@ -304,7 +307,7 @@ class GarisomModel(Model):
         responses to drought. New Phytologist 220: 836-850.
 
     This implementation:
-    - Runs GARISOM as a subprocess using parameter and configuration files
+    - Runs Sperry as a subprocess using parameter and configuration files
     - Supports parallel execution of multiple parameter sets
     - Handles temporary file management for model inputs/outputs
     - Provides comprehensive error handling and logging
@@ -317,18 +320,18 @@ class GarisomModel(Model):
     Example:
         ```python
         import pandas as pd
-        from garisom_tools import GarisomModel
+        from garisom_tools import SperryModel
 
         # Load base parameters
         params = pd.read_csv("base_parameters.csv")
 
         # Create model instance
-        model = GarisomModel(
+        model = SperryModel(
             run_kwargs={
                 'params': params,
                 'config_file': 'model_config.csv',
                 'population': 1,
-                'model_dir': '/path/to/garisom/executable'
+                'model_dir': '/path/to/Sperry/executable'
             },
             eval_kwargs={
                 'ground': ground_truth_data,
@@ -356,7 +359,7 @@ class GarisomModel(Model):
             eval_kwargs: dict[str, Any] = {}
     ):
         """
-        Initialize the GarisomModel instance.
+        Initialize the SperryModel instance.
 
         Args:
             run_kwargs (dict, optional): Keyword arguments for model execution.
@@ -364,7 +367,7 @@ class GarisomModel(Model):
                 - 'params': pandas.DataFrame with base parameter values
                 - 'config_file': str path to model configuration file
                 - 'population': int population index to use from parameters
-                - 'model_dir': str path to directory containing GARISOM executable
+                - 'model_dir': str path to directory containing Sperry executable
                 - 'verbose': bool whether to print detailed output
                 - 'return_on_fail': bool whether to return None on model failure
             eval_kwargs (dict, optional): Keyword arguments for model evaluation.
@@ -387,9 +390,9 @@ class GarisomModel(Model):
         **kwargs
     ) -> list[pd.DataFrame | None]:
         """
-        Execute GARISOM model runs in parallel for multiple parameter sets.
+        Execute Sperry model runs in parallel for multiple parameter sets.
 
-        This method uses ThreadPoolExecutor to run multiple GARISOM instances
+        This method uses ThreadPoolExecutor to run multiple Sperry instances
         concurrently, each with different parameter values. Progress is tracked
         with a progress bar, and failed runs are handled gracefully.
 
@@ -397,7 +400,7 @@ class GarisomModel(Model):
             params (pd.DataFrame): Base parameter DataFrame containing all model parameters.
             config_file (str): Path to the model configuration file.
             population (int): Population index to use from the params DataFrame.
-            model_dir (str): Path to directory containing the GARISOM executable.
+            model_dir (str): Path to directory containing the Sperry executable.
             workers (int, optional): Number of concurrent worker threads. Defaults to 4.
             X (list[dict[str, float]], optional): List of parameter dictionaries to override
                 base parameters. Each dict contains parameter names as keys and values as floats.
@@ -422,11 +425,11 @@ class GarisomModel(Model):
             ]
 
             # Run in parallel
-            results = GarisomModel.run_parallel(
+            results = SperryModel.run_parallel(
                 params=params,
                 config_file='config.csv',
                 population=1,
-                model_dir='/path/to/garisom',
+                model_dir='/path/to/Sperry',
                 workers=8,
                 X=param_sets,
                 verbose=True
@@ -487,20 +490,20 @@ class GarisomModel(Model):
         **kwargs
     ) -> pd.DataFrame | None:
         """
-        Execute a single GARISOM model run with specified parameters.
+        Execute a single Sperry model run with specified parameters.
 
         This method creates a temporary directory, modifies the parameter file
-        with custom values (if provided), runs the GARISOM model, and returns
+        with custom values (if provided), runs the Sperry model, and returns
         the output data.
 
         Args:
             params (pd.DataFrame): Base parameter DataFrame containing all model parameters.
-                Must have columns matching GARISOM parameter names.
+                Must have columns matching Sperry parameter names.
             config_file (str): Path to the model configuration file that specifies
                 model settings, input/output options, and simulation period.
             population (int): Population index (1-based) to use from the params DataFrame.
                 This determines which row of parameters to use as the base.
-            model_dir (str): Path to directory containing the GARISOM executable (./run).
+            model_dir (str): Path to directory containing the Sperry executable (./run).
             X (dict[str, float], optional): Dictionary of parameter overrides.
                 Keys must match column names in the params DataFrame.
             **kwargs: Additional keyword arguments passed to launch_model().
@@ -524,11 +527,11 @@ class GarisomModel(Model):
             params = pd.read_csv("parameters.csv")
 
             # Run with custom parameters
-            result = GarisomModel.run(
+            result = SperryModel.run(
                 params=params,
                 config_file='model_config.csv',
                 population=1,
-                model_dir='/path/to/garisom',
+                model_dir='/path/to/Sperry',
                 X={'i_fieldCapPercInit': 0.05, 'i_fieldCapFrac': 0.8},
                 verbose=True
             )
@@ -584,13 +587,13 @@ class GarisomModel(Model):
         verbose: bool = False
     ) -> pd.DataFrame | None:
         """
-        Launch the GARISOM model executable and process its output.
+        Launch the Sperry model executable and process its output.
 
-        This method handles the low-level execution of the GARISOM model as a
+        This method handles the low-level execution of the Sperry model as a
         subprocess, manages file I/O, and parses the resulting output files.
 
         Args:
-            model_dir (str): Path to directory containing the GARISOM executable (./run).
+            model_dir (str): Path to directory containing the Sperry executable (./run).
             param_file (str): Path to CSV file containing model parameters.
             config_file (str): Path to model configuration file.
             population (int): Population index (1-based) for parameter selection.
@@ -623,8 +626,8 @@ class GarisomModel(Model):
                 params.to_csv(f"{tmpdir}/params.csv", index=False)
 
                 # Launch model
-                result = GarisomModel.launch_model(
-                    model_dir='/path/to/garisom',
+                result = SperryModel.launch_model(
+                    model_dir='/path/to/Sperry',
                     param_file=f"{tmpdir}/params.csv",
                     config_file='config.csv',
                     population=1,
@@ -635,7 +638,7 @@ class GarisomModel(Model):
             ```
 
         Note:
-            - The GARISOM executable must be named './run' in model_dir
+            - The Sperry executable must be named './run' in model_dir
             - Output filename is determined by species, region, and site IDs from parameters
             - Uses subprocess.run() for robust process management
             - Automatically detects and loads the correct output file
@@ -685,8 +688,8 @@ class GarisomModel(Model):
         output,
         ground,
         metric_config: MetricConfig,
-        start_day: int,
-        end_day: int
+        start_date: datetime,
+        end_date: datetime
     ) -> EvalResults:
         """
         Evaluate model predictions against ground truth observations.
@@ -726,13 +729,13 @@ class GarisomModel(Model):
             ground_truth = pd.read_csv("observations.csv")  # Must have 'julian-day' column
 
             # Evaluate model output
-            model_output = GarisomModel.run(...)
-            evaluation = GarisomModel.evaluate_model(
+            model_output = SperryModel.run(...)
+            evaluation = SperryModel.evaluate_model(
                 output=model_output,
                 ground=ground_truth,
                 metric_config=metric_config,
-                start_day=180,  # July 1st (non-leap year)
-                end_day=243     # August 31st
+                start_date=datetime(2023, 07, 23)
+                end_date=243
             )
 
             print(f"RMSE: {evaluation['rmse']:.3f}")
@@ -741,7 +744,7 @@ class GarisomModel(Model):
             ```
 
         Note:
-            - Data is filtered by julian-day before metric calculation
+            - Data is filtered by date before metric calculation
             - Missing values (NaN) are automatically excluded from ground truth
             - Model predictions are aligned with ground truth observations by index
             - Failed model runs (output=None) receive penalty values (1e20 for min, -1e20 for max)
@@ -763,10 +766,23 @@ class GarisomModel(Model):
             if pred is None or eval_func is None:
                 err = 1e20 if mode == 'min' else -1e20 if mode == "max" else 0
             else:
-                # Filter ground data based on julian-day and drop NaN values
-                col_ground = ground[
-                    ground['julian-day'].between(start_day, end_day)
-                ][output_name].dropna()
+                # Filter ground data based on year and julian-day, then drop NaN values
+                start_year, start_day = start_date.year, start_date.timetuple().tm_yday
+                end_year, end_day = end_date.year, end_date.timetuple().tm_yday
+
+                if start_year == end_year:
+                    mask = (
+                        (ground['year'] == start_year) &
+                        (ground['julian-day'] >= start_day) &
+                        (ground['julian-day'] <= end_day)
+                    )
+                else:
+                    mask = (
+                        ((ground['year'] == start_year) & (ground['julian-day'] >= start_day)) |
+                        ((ground['year'] > start_year) & (ground['year'] < end_year)) |
+                        ((ground['year'] == end_year) & (ground['julian-day'] <= end_day))
+                    )
+                col_ground = ground[mask][output_name].dropna()
 
                 ground_values = np.array([col_ground.to_numpy()]).squeeze(axis=0)
 

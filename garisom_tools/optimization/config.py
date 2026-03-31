@@ -14,6 +14,7 @@ from garisom_tools.utils.distributions import (
 
 import json
 from dataclasses import dataclass, asdict
+from datetime import datetime
 
 
 @dataclass
@@ -140,10 +141,10 @@ class GarisomOptimizationConfig(OptimizationConfig):
     Attributes:
         population (int): Population identifier or size parameter for the optimization.
             Used to specify which population or the population size to optimize. Defaults to 1.
-        start_day (int): Starting day of year for the optimization period.
-            Day 201 corresponds to approximately July 20th. Defaults to 201.
-        end_day (int): Ending day of year for the optimization period.
-            Day 236 corresponds to approximately August 24th. Defaults to 236.
+        start_date (datetime): Starting day of year for the optimization period.
+            Defaults to July 20th, 2023.
+        end_date (datetime): Ending day of year for the optimization period.
+            Defaults to August 24th, 2023.
         space (SpaceConfig, optional): Inherited from OptimizationConfig. Configuration
             for the search space.
         metric (MetricConfig, optional): Inherited from OptimizationConfig. Configuration
@@ -155,8 +156,8 @@ class GarisomOptimizationConfig(OptimizationConfig):
         ```python
         garisom_config = GarisomOptimizationConfig(
             population=2,
-            start_day=180,
-            end_day=250,
+            start_date=datetime(2017, 1, 1),
+            end_date=datetime(2018, 1, 1),
             num_worker=6,
             num_samples=150
         )
@@ -165,5 +166,27 @@ class GarisomOptimizationConfig(OptimizationConfig):
     """
 
     population: int = 1
-    start_day: int = 201
-    end_day: int = 236
+    start_date: datetime = datetime(2023, 7, 20)
+    end_date: datetime = datetime(2023, 8, 24)
+
+    @classmethod
+    def from_json(cls, infile: str):
+        """Create a GarisomOptimizationConfig instance from a JSON file.
+
+        Loads configuration data from a JSON file and creates a new instance
+        with the specified parameters. Extends the parent class method to also
+        parse start_date and end_date from YYYY-MM-DD string format.
+
+        Args:
+            infile (str): Path to the JSON file containing the configuration data.
+
+        Returns:
+            GarisomOptimizationConfig: A new instance initialized with data from the file.
+        """
+        instance = super().from_json(infile)
+        if isinstance(instance.start_date, str):
+            instance.start_date = datetime.strptime(instance.start_date, "%Y-%m-%d")
+        if isinstance(instance.end_date, str):
+            instance.end_date = datetime.strptime(instance.end_date, "%Y-%m-%d")
+        return instance
+

@@ -168,7 +168,7 @@ class SensitivityAnalysis:
         ]
 
         # Save samples for reproducibility and debugging
-        np.save(f"{res_dir}/sample.npy", param_values)
+        np.save(f"{res_dir}/sample.npy", param_values)  # type: ignore
 
         return param_values
 
