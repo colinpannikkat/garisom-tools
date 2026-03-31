@@ -14,13 +14,13 @@ analysis is supported.
 
 ```python
 from garisom_tools.sa import SensitivityAnalysis, SensitivityAnalysisConfig
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 
 # Load configuration
 sa_config = SensitivityAnalysisConfig.from_json('sa_config.json')
 
 # Create model instance
-model = GarisomModel(run_kwargs={...})
+model = SperryModel(run_kwargs={...})
 
 # Setup sensitivity analysis
 sa = SensitivityAnalysis(

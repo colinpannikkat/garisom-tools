@@ -14,13 +14,13 @@ for models using Ray Tune and Optuna.
 
 ```python
 from garisom_tools.optimization import Optimizer, OptimizationConfig
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 
 # Load configuration
 config = OptimizationConfig.from_json('optimization_config.json')
 
 # Create model instance
-model = GarisomModel(
+model = SperryModel(
     run_kwargs={...},
     eval_kwargs={...}
 )
