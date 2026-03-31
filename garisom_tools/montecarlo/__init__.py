@@ -14,13 +14,13 @@ including uncertainty prediction and sensitivity analysis.
 
 ```python
 from garisom_tools.montecarlo import Sim, MonteCarloConfig
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 
 # Load configuration
 config = MonteCarloConfig.from_json('mc_config.json')
 
 # Create model instance
-model = GarisomModel(run_kwargs={...})
+model = SperryModel(run_kwargs={...})
 
 # Setup simulation
 sim = Sim(
