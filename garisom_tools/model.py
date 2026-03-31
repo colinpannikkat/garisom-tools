@@ -465,7 +465,7 @@ class GarisomModel(Model):
 
             for future in as_completed(futures):
                 pbar.update(1)
-                idx = futures[future]  # could run into race condition if future == None
+                idx = futures[future]
                 try:
                     out = future.result()
                     res[idx] = out
