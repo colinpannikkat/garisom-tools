@@ -30,18 +30,18 @@ python -m build
 Import the package in your Python code:
 
 ```python
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 ```
 
-To run the GARISOM model, you must provide a model directory path. To download and build the model please see the [GARISOM repository](https://github.com/colinpannikkat/garisom).
+To run the Sperry model (Sperry et al. 2017), you must provide a model directory path. To download and build the model please see the [GARISOM repository](https://github.com/colinpannikkat/garisom).
 
 ### Example: Running the Model
 
-Here's an example of how to run the GARISOM model using the `run` method:
+Here's an example of how to run the Sperry model using the `run` method:
 
 ```python
 import pandas as pd
-from garisom_tools import GarisomModel
+from garisom_tools import SperryModel
 
 # Example input parameters
 X = {'i_leafAreaIndex': 4.61, 'i_kmaxTree': 345.}
@@ -51,7 +51,7 @@ population = 1  # corresponds to row in configuration.csv
 model_dir = "./garisom/02_program_code"
 
 # Run the model
-output = GarisomModel.run(
+output = SperryModel.run(
     X=X,    # Optional argument, can run without passing in specific inputs
     params=params,
     config_file=config_file,
@@ -75,7 +75,7 @@ ground = pd.read_csv("./ground.csv")
 metric_config = MetricConfig([Metric.from_name('mse', 'P-PD')])
 
 # Evaluate the model
-errors = GarisomModel.evaluate_model(
+errors = SperryModel.evaluate_model(
     output,
     ground,
     metric_config,
