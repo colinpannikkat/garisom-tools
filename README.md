@@ -66,6 +66,7 @@ You can then evaluate against ground-truth data:
 ```python
 from garisom_tools.utils.metric import Metric
 from garisom_tools.config.metric import MetricConfig
+from datetime import datetime
 
 # Get ground data
 ground = pd.read_csv("./ground.csv")
@@ -78,8 +79,8 @@ errors = GarisomModel.evaluate_model(
     output,
     ground,
     metric_config,
-    start_day=0,
-    end_day=100
+    start_date=datetime(2023, 7, 1),
+    end_date=datetime(2023, 7, 31)
 )
 
 print(errors)

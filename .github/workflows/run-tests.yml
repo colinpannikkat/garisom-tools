@@ -15,6 +15,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Clone and build garisom
+      run: |
+        git clone https://github.com/colinpannikkat/garisom.git ../garisom
+        cd ../garisom/02_program_code
+        make
+        cd $GITHUB_WORKSPACE
     - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:

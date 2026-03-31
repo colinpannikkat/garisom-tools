@@ -21,6 +21,7 @@ from dataclasses import dataclass, asdict
 from ..config.metric import MetricConfig
 import json
 from typing import Optional
+from datetime import datetime
 
 
 @dataclass
@@ -114,10 +115,8 @@ class SensitivityAnalysisConfig:
         samples (int): Number of Sobol sequence samples to generate. Should be
             a power of 2 for optimal space-filling properties. Larger values
             provide more accurate sensitivity indices but require more computation.
-        start_day (int): Starting day of year for the analysis period. Used to
-            focus sensitivity analysis on specific temporal windows.
-        end_day (int): Ending day of year for the analysis period. Combined with
-            start_day to define the temporal scope of analysis.
+        start_date (datetime): Starting date of year for the analysis period.
+        end_date (datetime): Ending date of year for the analysis period.
         pop (int): Population identifier or index for population-specific
             sensitivity analysis. Useful for ecosystem models with multiple
             populations or demographic groups.
@@ -134,8 +133,8 @@ class SensitivityAnalysisConfig:
             metric=metric_config,
             workers=8,
             samples=1024,
-            start_day=150,
-            end_day=250,
+            start_date=datetime(2017, 1, 1),
+            end_date=datetime(2018, 1, 1),
             pop=1
         )
         ```
@@ -143,8 +142,8 @@ class SensitivityAnalysisConfig:
 
     problem: SensitivityAnalysisProblem
     metric: MetricConfig
-    start_day: int
-    end_day: int
+    start_date: datetime
+    end_date: datetime
     pop: int
     workers: int = 4
     samples: int = 64
@@ -190,6 +189,13 @@ class SensitivityAnalysisConfig:
         # Convert nested dictionaries to proper dataclass instances
         data['problem'] = SensitivityAnalysisProblem(**data['problem'])
         data['metric'] = MetricConfig.from_dict(data["metric"])
+
+        # Parse date strings to datetime objects
+        if isinstance(data.get('start_date'), str):
+            data['start_date'] = datetime.strptime(data['start_date'], "%Y-%m-%d")
+        if isinstance(data.get('end_date'), str):
+            data['end_date'] = datetime.strptime(data['end_date'], "%Y-%m-%d")
+
         return cls(**data)
 
     def to_json(self, outfile: str):
