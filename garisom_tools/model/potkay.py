@@ -238,7 +238,7 @@ class PotkayModel(Model):
                     results.append(result_ts)
 
                 # Concatenate results
-                output = pd.concat(results, ignore_index=False)
+                output = pd.concat(results, ignore_index=True)
             else:
                 # Single timestep mode
                 if verbose:
@@ -269,6 +269,7 @@ class PotkayModel(Model):
         C_p = 29.2  # molar heat capacity of air in [J/mol/K]
         emiss = 0.97  # emissivity of leaf [unitless]
         P_atm = 101.325  # atmospheric pressure in [kPa]
+        c_w = 4184  # thermal capacitance (specific heat capacity) of water in [J/kg/K]
 
         # TODO: change to variable parameter based on leaf characteristic dimension and wind
         # with default value if leaf characteristic dim or wind isn't available
@@ -279,11 +280,12 @@ class PotkayModel(Model):
         o_a = 21 / 101.325  # atmospheric O2 in [mol/mol]
         T_a = 25  # air temperature in [C]
         RH_a = 0.4  # relative humidity [unitless]
+        # TODO: R_abs should be calculated
         R_abs = 600  # absorbed shortwave radiation in [W/m^2]
         PPFD = 1200e-6  # photon flux density in [mol/m^2/s]
 
         # Soil Hydraulic Properties
-        h_soil = 0  # soil hydraulic head in [m]
+        h_soil = -0  # soil hydraulic head in [m]
 
         # Leaf apoplastic resistance
         r_min = 2.5e3  # minimum hydraulic resistance [MPa m2 s mol-1]
@@ -325,6 +327,11 @@ class PotkayModel(Model):
         # Respiration
         Q10_r = 2
 
+        # Hydraulic cost parameters
+        omega = 0.1  # unitless
+        theta = 0.5  # in [m^2 * s / mol]
+        xi = 0.5  # in [MPa^-1]
+
         return {
             'R': R_gas,
             'sigma': sigma,
@@ -365,6 +372,10 @@ class PotkayModel(Model):
             'a_j': a_j,
             'P_x_l_j_50': P_x_l_j_50,
             'Q10_r': Q10_r,
+            "omega": omega,
+            "theta": theta,
+            "xi": xi,
+            "c_w": c_w
         }
 
     @classmethod
@@ -415,19 +426,23 @@ class PotkayModel(Model):
         sigma = constants['sigma']
         V_w = constants['V_w']
         R_gas = constants['R']
+        omega = constants['omega']
+        theta = constants['theta']
+        xi = constants['xi']
+        c_w = constants['c_w']
 
         # Define temperature-dependent functions
         def rel_k_soil_func(T): return 1.25 ** ((T - 25) / 10)
         def rel_k_r_func(T): return 1.60 ** ((T - 25) / 10)
         def rel_k_x_func(T): return 1.25 ** ((T - 25) / 10)
-        def r_func(P_x_l): return r_min * np.exp(-0.5 * P_x_l)  # xi = 0.5
+        def r_func(P_x_l): return r_min * np.exp(-xi * P_x_l)  # xi = 0.5
         def Phi_PSII_func(T_l): return np.ones_like(T_l) * 0.25  # 1 - 0.75 (F_ss) / 1.0 (F_max)
         def V_cmax_func(T_l): return V_cmax_25 * np.exp(8e4 * (T_l + 273.15 - 290) / 290 / R_gas / (T_l + 273.15))
         def J_max_func(T_l): return J_max_25 * np.exp(8e4 * (T_l + 273.15 - 290) / 290 / R_gas / (T_l + 273.15))
         def Gamma_star_func(T_l): return np.ones_like(T_l) * 36e-6
         def K_c_func(T_l): return np.ones_like(T_l) * 275e-6
         def K_o_func(T_l): return np.ones_like(T_l) * 420000e-6
-        def R_d_func(T_l): return (0.01 * V_cmax_25) * Q10_r ** ((T_l - 25) / 10)
+        def R_d_func(T_l): return (0.01 * V_cmax_func(25)) * Q10_r ** ((T_l - 25) / 10)
         def NSL_c_func(P_x_l): return 1.0 / (1.0 + np.exp(a_c * (P_x_l_c_50 - P_x_l)))
         def NSL_j_func(P_x_l): return 1.0 / (1.0 + np.exp(a_j * (P_x_l_j_50 - P_x_l)))
 
@@ -463,24 +478,42 @@ class PotkayModel(Model):
                 P_x_l_vect, dP_x_ldE_vect
             )
 
-        print(lambda_vect)
+            risk_vect = cls._calculate_hydraulic_cost(
+                E_vect,
+                T_l_vect + 273.15,  # convert back to Kelvin
+                P_x_l_vect,
+                omega,
+                theta,
+                xi,
+                c_w,
+                L / m  # latent heat of vaporization in [J/kg]
+            )
+
+        profit = np.abs(lambda_vect - risk_vect)
+        profit_max_idx = np.nanargmin(profit)
 
         # Package results into DataFrame
-        output = pd.DataFrame({
-            'E_vect': E_vect,
-            'A_n_vect': A_n_vect,
-            'R_d_vect': R_d_vect,
-            'g_w_vect': g_w_vect,
-            'g_c_vect': g_c_vect,
-            'g_tot_vect': g_tot_vect,
-            'lambda_vect': lambda_vect,
-            'P_x_l_vect': P_x_l_vect,
-            'P_x_r_vect': P_x_r_vect,
-            'P_0_vect': P_0_vect,
-            'T_l_vect': T_l_vect,
-            'VPD_vect': VPD_vect,
-            'RH_l_vect': RH_l_vect,
-        })
+        output = pd.DataFrame(
+            {
+                'E':  E_vect[profit_max_idx],
+                'A_n': A_n_vect[profit_max_idx],
+                'R_d': R_d_vect[profit_max_idx],
+                'g_w': g_w_vect[profit_max_idx],
+                'g_c': g_c_vect[profit_max_idx],
+                'g_tot': g_tot_vect[profit_max_idx],
+                'lambda': lambda_vect[profit_max_idx],
+                'risk': risk_vect[profit_max_idx],
+                'profit': profit[profit_max_idx],
+                'profit_idx': profit_max_idx,
+                'P_x_l': P_x_l_vect[profit_max_idx],
+                'P_x_r': P_x_r_vect[profit_max_idx],
+                'P_0': P_0_vect[profit_max_idx],
+                'T_l': T_l_vect[profit_max_idx],
+                'VPD': VPD_vect[profit_max_idx],
+                'RH_l': RH_l_vect[profit_max_idx],
+            },
+            index=[0]
+        )
 
         return output
 
@@ -735,7 +768,7 @@ class PotkayModel(Model):
             g_c_vect - total conductance to CO2 in [mol/m^2/s]
             T_l_vect - leaf temperature in [C]
             dEdg_w_vect - derivative of transpiration with respect to stomatal conductance to vapor [unitless]
-            dg_wdg_c_vect - derivative of stomatal conductance to vapor with respect to total conductance to 
+            dg_wdg_c_vect - derivative of stomatal conductance to vapor with respect to total conductance to
                 CO2 [unitless]
             P_x_l_vect - leaf water potential in [MPa]
             dP_x_ldE_vect - derivative of leaf water potential with respect to transpiration in [MPa*m^2*s/mol]
@@ -748,8 +781,8 @@ class PotkayModel(Model):
         J_phi_vect = alpha / 2 * Phi_PSII_vect * PPFD
 
         # Hyperbolic minimum of J_max and J_phi
-        J_vect = ((J_max_vect + J_phi_vect) / (2 * theta_J) -
-                  np.sqrt((J_max_vect + J_phi_vect) / (2 * theta_J) ** 2 - J_max_vect * J_phi_vect / theta_J))
+        J_vect = (J_max_vect + J_phi_vect) / (2 * theta_J) - \
+            np.sqrt(((J_max_vect + J_phi_vect) / (2 * theta_J)) ** 2 - J_max_vect * J_phi_vect / theta_J)
 
         Gamma_star_vect = Gamma_star_func(T_l_vect)
         K_c_vect = K_c_func(T_l_vect)
@@ -787,8 +820,6 @@ class PotkayModel(Model):
         lambda_vect = np.full(n, np.nan)
 
         for i in range(n_stop):
-            if np.isnan(g_c_vect[i]):
-                continue
 
             g_c_i = g_c_vect[i]
             V_cmax_i = V_cmax_vect[i]
@@ -840,29 +871,30 @@ class PotkayModel(Model):
 
                     if len(F_positive) == 0:
                         F_UB = F[0]
-                        idx_UB = 0
                     else:
                         F_UB = np.min(F_positive)
-                        idx_UB = np.argmin(np.abs(F - F_UB))
 
                     if len(F_negative) == 0:
                         F_LB = np.nan
-                        idx_LB = 0
                     else:
                         F_LB = np.max(F_negative)
-                        idx_LB = np.argmax(F_negative)
 
-                    A_n_LB = min(A_n_i[idx_LB]) if not np.isnan(F_LB) else -R_d_i
-                    A_n_UB = max(A_n_i[idx_UB])
+                    A_n_LB = min(A_n_i[F == F_LB]) if not np.isnan(F_LB) else -R_d_i
+                    A_n_UB = max(A_n_i[F == F_UB])
 
-                    if A_n_LB >= A_n_UB:
-                        break
+                    if A_n_LB == A_n_UB:
+                        if (A_n_UB == -R_d_i) and (A_n_LB == -R_d_i):
+                            break
+                        else:
+                            raise Exception('ERROR: Photosynthesis module cannot converge on A_n!!!')
 
                     A_n_M = (A_n_LB + A_n_UB) / 2
                     A_n_i = np.hstack([A_n_LB, A_n_M, A_n_UB])
 
                 # Select best solution
                 A_n_vect[i] = A_n_i[np.argmin(np.abs(F))]  # type: ignore
+                if np.isnan(A_n_vect[i]):
+                    raise Exception("ERROR: NaN in A_n!!")
 
         c_i_vect = c_a - A_n_vect / g_c_vect
 
@@ -979,6 +1011,19 @@ class PotkayModel(Model):
         #     raise Exception("ERROR: NaN in 'lambda_vect'!!!")
 
         return A_n_vect, R_d_vect, lambda_vect
+
+    @staticmethod
+    def _calculate_hydraulic_cost(
+        E_vect: np.ndarray,
+        T_l_k_vect: np.ndarray,
+        P_x_l_vect: np.ndarray,
+        omega,
+        theta,
+        xi,
+        c_w,
+        L,
+    ):
+        return L / c_w / T_l_k_vect * (omega + theta * np.exp(-xi * P_x_l_vect) * E_vect)
 
     @classmethod
     def evaluate_model(

@@ -14,7 +14,8 @@ A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#
 
 - `Model`: Base classes for model execution and evaluation. Enables users to easily
     derive new model classes and use the existing API with their custom models.
-- `SperryModel`: Concrete implementation for interfacing with the Sperry gain-risk model
+    - `SperryModel`: Concrete implementation for interfacing with the Sperry gain-risk model
+    - `PotkayModel`: Implementation of Potkay's Generalized Stomatal Optimization Model
 - `montecarlo`: Monte Carlo simulation framework
 - `optimization`: Optimization and parameter tuning tools
 - `config`: Configuration management for metrics and parameter spaces

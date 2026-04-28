@@ -189,4 +189,3 @@ class GarisomOptimizationConfig(OptimizationConfig):
         if isinstance(instance.end_date, str):
             instance.end_date = datetime.strptime(instance.end_date, "%Y-%m-%d")
         return instance
-
