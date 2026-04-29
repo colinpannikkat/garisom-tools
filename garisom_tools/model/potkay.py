@@ -134,6 +134,7 @@ class PotkayModel(Model):
     @classmethod
     def run(
         cls,
+        params: dict,
         X: dict[str, float] | None = None,
         **kwargs
     ) -> pd.DataFrame | None:
@@ -141,6 +142,7 @@ class PotkayModel(Model):
         Execute a single Potkay model run with specified parameters.
 
         Args:
+            params (dict): Base parameter dict containing all model parameters.
             X (dict[str, float], optional): Dictionary of parameter overrides.
                 Keys should match parameter names in the Potkay model.
             **kwargs: Additional keyword arguments passed to launch_model().
@@ -151,7 +153,10 @@ class PotkayModel(Model):
                 Returns None if the model run fails.
         """
         try:
-            output = cls.launch_model(X=X, **kwargs)
+            # Overwrite parameters with sample params if X is provided
+            if X is not None:
+                params.update(X)
+            output = cls.launch_model(params=params, **kwargs)
             return output
         except Exception as e:
             print(f"Model run failed: {e}")
@@ -160,7 +165,7 @@ class PotkayModel(Model):
     @classmethod
     def launch_model(
         cls,
-        X: dict[str, float] | None = None,
+        params: dict[str, float] | None = None,
         E_range: tuple[float, float, float] = (0, 0.01, 1e-5),
         env_data: pd.DataFrame | None = None,
         verbose: bool = False,
@@ -172,7 +177,7 @@ class PotkayModel(Model):
         rates, including hydraulic, thermal, and photosynthetic components.
 
         Args:
-            X (dict[str, float], optional): Dictionary of parameter overrides.
+            params (dict[str, float], optional): Dictionary of parameter overrides.
                 Parameters follow INPUTS_0_Constants.m naming convention.
             E_range (tuple, optional): Tuple (min, max, step) for transpiration vector in mol/m^2/s.
                 Defaults to (0, 0.01, 1e-5).
@@ -207,8 +212,8 @@ class PotkayModel(Model):
             constants = cls._get_default_constants()
 
             # Apply parameter overrides
-            if X is not None:
-                constants.update(X)
+            if params is not None:
+                constants.update(params)
 
             # Determine if we have multiple timesteps
             if env_data is not None and len(env_data) > 0:
@@ -233,7 +238,7 @@ class PotkayModel(Model):
                     # Add time info
                     result_ts['year'] = row.get('year', np.nan)
                     result_ts['julian_day'] = row.get('julian_day', row.get('day', np.nan))
-                    result_ts['hour'] = row.get('hour', np.nan)
+                    result_ts['standard-time'] = row.get('hour', np.nan)
 
                     results.append(result_ts)
 
@@ -384,7 +389,7 @@ class PotkayModel(Model):
 
         # Create transpiration vector
         E_min, E_max, E_step = E_range
-        E_vect = np.arange(E_min, E_max, E_step)
+        E_vect = np.arange(E_min, E_max, E_step)  # [mol/m^2/s]
 
         # Extract constants
         m = constants['m']
@@ -495,12 +500,12 @@ class PotkayModel(Model):
         # Package results into DataFrame
         output = pd.DataFrame(
             {
-                'E':  E_vect[profit_max_idx],
+                'E-MD':  E_vect[profit_max_idx] * 1e3,  # mol/m^2/s -> mmol/m^2/s
                 'A_n': A_n_vect[profit_max_idx],
                 'R_d': R_d_vect[profit_max_idx],
-                'g_w': g_w_vect[profit_max_idx],
-                'g_c': g_c_vect[profit_max_idx],
-                'g_tot': g_tot_vect[profit_max_idx],
+                'GW': g_w_vect[profit_max_idx] * 1e3,  # mol/m^2/s -> mmol/m^2/s
+                'g_c': g_c_vect[profit_max_idx] * 1e3,  # mol/m^2/s -> mmol/m^2/s
+                'g_tot': g_tot_vect[profit_max_idx] * 1e3,  # mol/m^2/s -> mmol/m^2/s
                 'lambda': lambda_vect[profit_max_idx],
                 'risk': risk_vect[profit_max_idx],
                 'profit': profit[profit_max_idx],
@@ -508,7 +513,8 @@ class PotkayModel(Model):
                 'P_x_l': P_x_l_vect[profit_max_idx],
                 'P_x_r': P_x_r_vect[profit_max_idx],
                 'P_0': P_0_vect[profit_max_idx],
-                'T_l': T_l_vect[profit_max_idx],
+                'leaftemp': T_l_vect[profit_max_idx],
+                'leaf-air-temp-diff': T_l_vect[profit_max_idx] - T_a,
                 'VPD': VPD_vect[profit_max_idx],
                 'RH_l': RH_l_vect[profit_max_idx],
             },
@@ -551,6 +557,7 @@ class PotkayModel(Model):
             dP_x_ldE - derivative of leaf xylem water potential with respect to transpiration [MPa*m^2*s/mol]
 
         Inputs
+            E_vect - transpiration vector [mol/m^2/s]
             m - molar mass of water in [kg/mol]
             rho - density of water in [kg/m^3]
             h_soil - soil hydraulic head in [m]
