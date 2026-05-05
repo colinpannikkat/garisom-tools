@@ -1,10 +1,13 @@
 # garisom-tools
 
-Assorted tools for the GARISOM model.
+Assorted tools for runnings stomatal optimization models.
 
 ## Features
-- Model wrapper for running in Python along with easy evaluation
+- Model wrapper for running in stomatal optimization models in Python along with easy evaluation
   - Parallel execution with multiprocessing
+- Included models
+  - Sperry model from Venturas et al. 2018 and Sperry et al. 2017
+  - Potkay model from Potkay et al. 2025
 - Bayesian parameter optimization using RayTune
 - Easy configuration management
 - Monte Carlo simulation
@@ -94,6 +97,8 @@ print(errors)
 - scikit-learn
 - ray[tune]
 - tqdm
+- SALib
+- optuna
 
 ## License
 MIT
