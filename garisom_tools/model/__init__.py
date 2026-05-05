@@ -2,14 +2,13 @@
 # Model Interface and Sperry Interface Implementation
 
 This module provides abstract base classes and concrete implementations for running
-stomatal-optimization models, specifically the Sperry (Gain-Risk Stomatal Optimization Model from Sperry et al. 2017)
-model.
+stomatal-optimization models.
 
 ## Classes
 
 - `Model`: Abstract base class defining the interface for all models
 - `SperryModel`: Concrete interface implementation for the Sperry model
-- `PotkayModel`: Concrete interface implementation for the Potkay leaf physiology model
+- `PotkayModel`: Concrete interface implementation for the Potkay model
 
 ## Key Features
 

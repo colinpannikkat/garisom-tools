@@ -1,9 +1,9 @@
 """
 # GARISOM Tools
 
-A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#citation), providing functionality for:
+A comprehensive toolkit for working with stomatal optimization models, providing functionality for:
 
-- **Model Interface**: Abstract base classes and concrete implementation for running GARISOM simulations
+- **Model Interface**: Abstract base classes and concrete implementation for running model simulations
 - **Monte Carlo Simulations**: Tools for uncertainty quantification and sensitivity analysis
 - **Optimization**: Bayesian optimization and hyperparameter tuning capabilities
 - **Configuration Management**: Flexible configuration systems for metrics, parameter spaces, and distributions
@@ -14,8 +14,8 @@ A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#
 
 - `Model`: Base classes for model execution and evaluation. Enables users to easily
     derive new model classes and use the existing API with their custom models.
-    - `SperryModel`: Concrete implementation for interfacing with the Sperry gain-risk model
-    - `PotkayModel`: Implementation of Potkay's Generalized Stomatal Optimization Model
+    - `SperryModel`: Concrete implementation for interfacing with the Sperry gain-risk model [**[1][2]**](#citation)
+    - `PotkayModel`: Implementation of Potkay's Generalized Stomatal Optimization Model [**[3]**](#citation)
 - `montecarlo`: Monte Carlo simulation framework
 - `optimization`: Optimization and parameter tuning tools
 - `config`: Configuration management for metrics and parameter spaces
@@ -24,9 +24,7 @@ A comprehensive toolkit for working with the GARISOM/Sperry model [**[1][2]**](#
 
 ## Planned Additions
 - More stomatal optimization models
-- Supporting multiple years
-- Better tests
-- Built in default parameter and configuration files
+- Built in default parameter and configuration files for Sperry model
 
 ## Example Usage
 
@@ -69,6 +67,15 @@ the model in your work, please cite the following.
 [2] Venturas MD, Sperry JS, Love DM, Frehner EH, Allred MG, Wang Y, Anderegg WRL. 2018.
     A stomatal control model based on optimization of carbon gain versus hydraulic risk predicts aspen sapling
     responses to drought. New Phytologist 220: 836-850.
+
+The Potkay model was originally published in the following paper. If you use 
+the model please cite the following.
+
+[3] Potkay A, Cabon A, Peters RL, Fonti P, Sapes G, Sala A, Stefanski A, Butler E, 
+    Bermudez R, Montgomery R, et al. 2025. Generalized Stomatal Optimization of 
+    Evolutionary Fitness Proxies for Predicting Plant Gas Exchange Under Drought, 
+    Heatwaves, and Elevated CO2. Global Change Biology 31: e70049.
+
 """
 
 from .model import *

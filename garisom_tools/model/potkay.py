@@ -3,13 +3,6 @@ import pandas as pd
 import numpy as np
 from typing import Any, Callable
 
-# For model evaluation
-from datetime import datetime
-
-# Optimizer stuff
-from garisom_tools.config import MetricConfig
-from garisom_tools.utils.results import EvalResults
-
 # Parallel runs
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -21,12 +14,15 @@ class PotkayModel(Model):
     """
     Concrete implementation of the Model interface for the Potkay model.
 
-    The PotkayModel class provides functionality to run the Potkay leaf-level physiology model,
-    which integrates hydraulic, temperature, and carbon assimilation calculations. The model
-    computes transpiration response and net assimilation across a range of leaf water potentials.
+    The PotkayModel class provides functionality to run the Potkay Generalized Stomatal
+    Optimization Model (GSO). Information on the model can be found in:
+
+    - Potkay A et al. 2025
+        Generalized Stomatal Optimization of Evolutionary Fitness Proxies for Predicting 
+        Plant Gas Exchange Under Drought, Heatwaves, and Elevated CO2
 
     This implementation:
-    - Runs Potkay as a Python-based model (not a subprocess)
+    - Runs Potkay as a Python-based model
     - Supports parallel execution of multiple parameter sets
     - Provides comprehensive error handling and logging
     - Evaluates model outputs against ground truth observations
@@ -1034,70 +1030,3 @@ class PotkayModel(Model):
         L,
     ):
         return L / c_w / T_l_k_vect * (omega + theta * np.exp(-xi * P_x_l_vect) * E_vect)
-
-    @classmethod
-    def evaluate_model(
-        cls,
-        output: pd.DataFrame,
-        ground: pd.DataFrame,
-        metric_config: MetricConfig,
-        start_date: datetime,
-        end_date: datetime
-    ) -> EvalResults:
-        """
-        Evaluate Potkay model output against ground truth data.
-
-        Args:
-            output (pd.DataFrame | None): Model output from launch_model().
-            ground (pd.DataFrame): Ground truth observations with 'year' and 'julian-day' columns.
-            metric_config (MetricConfig): Configuration for metrics to compute.
-            start_date (datetime): Start date for evaluation period.
-            end_date (datetime): End date for evaluation period.
-
-        Returns:
-            EvalResults: Dictionary mapping metric names to computed values.
-        """
-
-        out_names = [metric.output_name for metric in metric_config.metrics]
-        pred = output[out_names].to_numpy(dtype=float) if output is not None else None
-
-        metrics = metric_config.metrics
-        modes = metric_config.modes
-
-        errors: dict[str, np.typing.ArrayLike] = {}
-        for idx, (metric, mode) in enumerate(zip(metrics, modes)):
-            output_name = metric.output_name
-            optim_name = metric.name
-            eval_func = metric.func
-
-            if pred is None or eval_func is None:
-                err = 1e20 if mode == 'min' else -1e20 if mode == "max" else 0
-            else:
-                start_year, start_day = start_date.year, start_date.timetuple().tm_yday
-                end_year, end_day = end_date.year, end_date.timetuple().tm_yday
-
-                if start_year == end_year:
-                    mask = (
-                        (ground['year'] == start_year) &
-                        (ground['julian-day'] >= start_day) &
-                        (ground['julian-day'] <= end_day)
-                    )
-                else:
-                    mask = (
-                        ((ground['year'] == start_year) & (ground['julian-day'] >= start_day)) |
-                        ((ground['year'] > start_year) & (ground['year'] < end_year)) |
-                        ((ground['year'] == end_year) & (ground['julian-day'] <= end_day))
-                    )
-                col_ground = ground[mask][output_name].dropna()
-
-                ground_values = np.array([col_ground.to_numpy()]).squeeze(axis=0)
-
-                col_pred = pred[:, idx]
-                col_pred = pd.DataFrame(col_pred)
-                pred_values = col_pred.loc[col_ground.index].T.to_numpy().squeeze(axis=0)
-
-                err = eval_func(ground_values, pred_values)
-
-            errors[optim_name] = err
-
-        return errors
