@@ -86,6 +86,7 @@ class PotkayModel(Model):
     @classmethod
     def run_parallel(
         cls,
+        params: dict | None = None,
         X: list[dict[str, float]] | None = None,
         workers: int = 4,
         **kwargs
@@ -94,6 +95,7 @@ class PotkayModel(Model):
         Execute Potkay model runs in parallel for multiple parameter sets.
 
         Args:
+            params (dict): Base parameter dict containing all model parameters.
             X (list[dict[str, float]], optional): List of parameter dictionaries to override
                 base parameters. Each dict contains parameter names as keys and values as floats.
             workers (int, optional): Number of concurrent worker threads. Defaults to 4.
@@ -112,6 +114,7 @@ class PotkayModel(Model):
             futures = {
                 executor.submit(
                     cls.run,
+                    params=params,
                     X=X[i] if X is not None else None,
                     **kwargs
                 ):
@@ -134,7 +137,7 @@ class PotkayModel(Model):
     @classmethod
     def run(
         cls,
-        params: dict,
+        params: dict | None = None,
         X: dict[str, float] | None = None,
         **kwargs
     ) -> pd.DataFrame | None:
@@ -154,7 +157,7 @@ class PotkayModel(Model):
         """
         try:
             # Overwrite parameters with sample params if X is provided
-            if X is not None:
+            if params is not None and X is not None:
                 params.update(X)
             output = cls.launch_model(params=params, **kwargs)
             return output
@@ -237,7 +240,7 @@ class PotkayModel(Model):
 
                     # Add time info
                     result_ts['year'] = row.get('year', np.nan)
-                    result_ts['julian_day'] = row.get('julian_day', row.get('day', np.nan))
+                    result_ts['julian-day'] = row.get('julian-day', row.get('day', np.nan))
                     result_ts['standard-time'] = row.get('hour', np.nan)
 
                     results.append(result_ts)

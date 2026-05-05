@@ -205,7 +205,6 @@ class TestPotkayModel:
         E_range = (0, 0.001, 0.0001)
 
         output = PotkayModel.launch_model(
-            X=None,
             E_range=E_range,
             env_data=None,
             verbose=False
@@ -217,18 +216,18 @@ class TestPotkayModel:
         assert len(output) > 0
 
         # Check for expected columns
-        expected_cols = ['E', 'A_n', 'R_d', 'g_w', 'g_c',
-                         'lambda', 'P_x_l', 'T_l', 'VPD']
+        expected_cols = ['E-MD', 'A_n', 'R_d', 'GW', 'g_c',
+                         'lambda', 'P_x_l', 'leaftemp', 'VPD']
         for col in expected_cols:
             assert col in output.columns, f"Missing expected column: {col}"
 
     def test_potkay_launch_model_with_parameter_overrides(self):
         """Test PotkayModel.launch_model with parameter overrides."""
         E_range = (0, 0.001, 0.0001)
-        X = {'V_cmax_25': 80e-6, 'J_max_25': 150e-6, 'T_a': 30}
+        params = {'V_cmax_25': 80e-6, 'J_max_25': 150e-6, 'T_a': 30}
 
         output = PotkayModel.launch_model(
-            X=X,
+            params=params,
             E_range=E_range,
             env_data=None,
             verbose=False
@@ -243,7 +242,7 @@ class TestPotkayModel:
         # Create simple env_data with 2 timesteps
         env_data = pd.DataFrame({
             'year': [2023, 2023],
-            'julian_day': [180, 181],
+            'julian-day': [180, 181],
             'hour': [12, 12],
             'T_a': [25, 26],
             'RH_a': [0.5, 0.6],
@@ -254,7 +253,6 @@ class TestPotkayModel:
         E_range = (0, 0.001, 0.0001)
 
         output = PotkayModel.launch_model(
-            X=None,
             E_range=E_range,
             env_data=env_data,
             verbose=False
@@ -267,14 +265,15 @@ class TestPotkayModel:
 
         # Check time columns are present
         assert 'year' in output.columns
-        assert 'julian_day' in output.columns
-        assert 'hour' in output.columns
+        assert 'julian-day' in output.columns
+        assert 'standard-time' in output.columns
 
     def test_potkay_run_returns_dataframe_or_none(self):
         """Test PotkayModel.run returns DataFrame or None."""
         E_range = (0, 0.001, 0.0001)
 
         result = PotkayModel.run(
+            params=None,
             X=None,
             E_range=E_range,
             verbose=False
