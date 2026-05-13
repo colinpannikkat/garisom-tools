@@ -32,6 +32,18 @@ from dataclasses import dataclass, asdict
 from typing import Optional
 
 
+# Map distribution type strings to scipy distribution functions
+_MAPPING = {
+    "normal": get_scipy_normal,
+    "truncnorm": get_scipy_truncated_normal,
+    "uniform": get_scipy_uniform
+}
+
+
+def get_mapping_dict():
+    return _MAPPING
+
+
 @dataclass
 class MonteCarloConfig:
     """Configuration class for Monte Carlo simulation settings.
@@ -81,6 +93,22 @@ class MonteCarloConfig:
     num_samples: int = 100
 
     @classmethod
+    def from_dict(cls, data: dict):
+        """Create a MonteCarloConfig instance from a dictionary.
+
+        Args:
+            data (dict): Dictionary containing configuration data.
+
+        Returns:
+            MonteCarloConfig: A new instance initialized with data from the dict.
+        """
+
+        payload = dict(data)
+        if "space" in payload and not isinstance(payload["space"], SpaceConfig):
+            payload["space"] = SpaceConfig.from_dict(_MAPPING, payload["space"])
+        return cls(**payload)
+
+    @classmethod
     def from_json(cls, infile: str):
         """Create a MonteCarloConfig instance from a JSON file.
 
@@ -118,17 +146,7 @@ class MonteCarloConfig:
         """
         with open(infile, "r") as f:
             data = json.load(f)
-
-        # Map distribution type strings to scipy distribution functions
-        mapping = {
-            "normal": get_scipy_normal,
-            "truncnorm": get_scipy_truncated_normal,
-            "uniform": get_scipy_uniform
-        }
-
-        # Convert space configuration using distribution mapping
-        data['space'] = SpaceConfig.from_dict(mapping, data['space'])
-        return cls(**data)
+        return cls.from_dict(data)
 
     def to_json(self, outfile: str):
         """Serialize the configuration to a JSON file.
@@ -169,15 +187,10 @@ class MonteCarloConfig:
 
 @dataclass
 class GarisomMonteCarloConfig(MonteCarloConfig):
-    """Specialized Monte Carlo configuration for Garisom ecosystem models.
+    """Specialized Monte Carlo configuration for gain-risk models.
 
     Extends the base MonteCarloConfig with additional parameters specific
-    to Garisom ecosystem model simulations. Includes population-level settings
-    and parameter overrides for GARISOM Monte Carlo analysis.
-
-    This configuration class is designed for use with Garisom ecosystem models
-    where population-level parameters and custom parameter overrides are
-    frequently needed for uncertainty quantification and sensitivity analysis.
+    to gain-risk model simulations.
 
     Attributes:
         population (int): Population identifier or index for the simulation.
@@ -211,3 +224,16 @@ class GarisomMonteCarloConfig(MonteCarloConfig):
 
     population: int = 1
     parameters: Optional[dict[str, float]] = None
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create a GarisomMonteCarloConfig instance from a dictionary.
+
+        Args:
+            data (dict): Dictionary containing configuration data.
+
+        Returns:
+            GarisomMonteCarloConfig: A new instance initialized with data from the dict.
+        """
+
+        return super().from_dict(data)
