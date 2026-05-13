@@ -23,7 +23,7 @@ class TestGarisomOptimizationConfigFromJson:
                 "modes": ["min"],
                 "params": ["output"]
             },
-            "num_worker": 4,
+            "num_workers": 4,
             "num_samples": 100,
             "population": 1,
             "start_date": "2023-07-20",
@@ -55,7 +55,7 @@ class TestGarisomOptimizationConfigFromJson:
                 "modes": ["min"],
                 "params": ["output"]
             },
-            "num_worker": 4,
+            "num_workers": 4,
             "num_samples": 100,
             "population": 2,
             "start_date": "2017-01-15",
@@ -87,7 +87,7 @@ class TestGarisomOptimizationConfigFromJson:
                 "modes": ["min", "min"],
                 "params": ["pred", "pred"]
             },
-            "num_worker": 8,
+            "num_workers": 8,
             "num_samples": 200,
             "population": 1,
             "start_date": "2023-06-01",
@@ -101,7 +101,7 @@ class TestGarisomOptimizationConfigFromJson:
         try:
             config = GarisomOptimizationConfig.from_json(temp_path)
 
-            assert config.num_worker == 8
+            assert config.num_workers == 8
             assert config.num_samples == 200
             assert config.space is not None
             assert config.metric is not None
@@ -124,7 +124,7 @@ class TestOptimizationConfigFromJson:
                 "modes": ["max"],
                 "params": ["flow"]
             },
-            "num_worker": 2,
+            "num_workers": 2,
             "num_samples": 50
         }
 
@@ -135,7 +135,7 @@ class TestOptimizationConfigFromJson:
         try:
             config = OptimizationConfig.from_json(temp_path)
 
-            assert config.num_worker == 2
+            assert config.num_workers == 2
             assert config.num_samples == 50
             assert config.space is not None
             assert config.metric is not None
