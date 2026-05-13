@@ -149,6 +149,37 @@ class SensitivityAnalysisConfig:
     samples: int = 64
 
     @classmethod
+    def from_dict(cls, data: dict):
+        """Create a SensitivityAnalysisConfig instance from a dictionary.
+
+        Args:
+            data (dict): Dictionary containing sensitivity analysis configuration
+                parameters. Must include 'problem' and 'metric' keys.
+
+        Returns:
+            SensitivityAnalysisConfig: A new configuration instance built from
+                the provided data.
+
+        Raises:
+            TypeError: If the loaded data doesn't match the expected structure.
+            KeyError: If required configuration keys are missing.
+        """
+
+        data = dict(data)
+
+        # Convert nested dictionaries to proper dataclass instances
+        data["problem"] = SensitivityAnalysisProblem(**data["problem"])
+        data["metric"] = MetricConfig.from_dict(data["metric"])
+
+        # Parse date strings to datetime objects
+        if isinstance(data.get("start_date"), str):
+            data["start_date"] = datetime.strptime(data["start_date"], "%Y-%m-%d")
+        if isinstance(data.get("end_date"), str):
+            data["end_date"] = datetime.strptime(data["end_date"], "%Y-%m-%d")
+
+        return cls(**data)
+
+    @classmethod
     def from_json(cls, infile: str):
         """Create a SensitivityAnalysisConfig instance from a JSON file.
 
@@ -186,17 +217,7 @@ class SensitivityAnalysisConfig:
         with open(infile, "r") as f:
             data = json.load(f)
 
-        # Convert nested dictionaries to proper dataclass instances
-        data['problem'] = SensitivityAnalysisProblem(**data['problem'])
-        data['metric'] = MetricConfig.from_dict(data["metric"])
-
-        # Parse date strings to datetime objects
-        if isinstance(data.get('start_date'), str):
-            data['start_date'] = datetime.strptime(data['start_date'], "%Y-%m-%d")
-        if isinstance(data.get('end_date'), str):
-            data['end_date'] = datetime.strptime(data['end_date'], "%Y-%m-%d")
-
-        return cls(**data)
+        return cls.from_dict(data)
 
     def to_json(self, outfile: str):
         """Serialize the configuration to a JSON file.

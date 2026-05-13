@@ -42,6 +42,7 @@ class SperryModel(Model):
     Example:
         ```python
         import pandas as pd
+        from datetime import datetime
         from garisom_tools import SperryModel
 
         # Load base parameters
@@ -57,8 +58,8 @@ class SperryModel(Model):
             },
             eval_kwargs={
                 'ground': ground_truth_data,
-                'start_day': 180,
-                'end_day': 250
+                'start_date': datetime(2023, 7, 20),
+                'end_day': datetime(2023, 8, 24)
             }
         )
 
@@ -70,8 +71,8 @@ class SperryModel(Model):
             result,
             ground_truth_data,
             metric_config,
-            start_day=180,
-            end_day=250
+            start_date=datetime(2023, 7, 20),
+            end_date=datetime(2023, 8, 24)
         )
         ```
     """
@@ -96,8 +97,8 @@ class SperryModel(Model):
             eval_kwargs (dict, optional): Keyword arguments for model evaluation.
                 Expected keys include:
                 - 'ground': pandas.DataFrame with ground truth observations
-                - 'start_day': int julian day to start evaluation period
-                - 'end_day': int julian day to end evaluation period
+                - 'start_date': int julian day to start evaluation period
+                - 'end_date': int julian day to end evaluation period
         """
         super().__init__(run_kwargs=run_kwargs, eval_kwargs=eval_kwargs)
 

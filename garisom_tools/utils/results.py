@@ -74,13 +74,11 @@ class MetricResult:
         result = MetricResult(
             scores={
                 'rmse': 0.15,
-                'r2': 0.85,
                 'nse': 0.82
             },
             parameters={
-                'growth_rate': 0.05,
-                'water_efficiency': 0.8,
-                'root_depth': 1.5
+                'i_leafAreaIndex': 2.5,
+                'i_rootBeta': 0.9
             }
         )
 
@@ -102,6 +100,24 @@ class MetricResult:
             dict: Dictionary representation suitable for JSON serialization.
         """
         return asdict(self)
+
+    def to_json(self, outfile: str):
+        """Save the MetricResult to a JSON file.
+
+        Args:
+            outfile (str): Path to the output JSON file.
+
+        Example:
+            ```python
+            result = MetricResult(scores={"rmse": 0.12}, parameters={"k": 0.5})
+            result.to_json("metric_result.json")
+            ```
+
+        Note:
+            Uses the "+x" mode to create a new file, will fail if file already exists.
+        """
+        with open(outfile, "+x") as f:
+            json.dump(self.to_dict(), f)
 
 
 class ParamResults(dict[str, MetricResult]):

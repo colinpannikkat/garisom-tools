@@ -17,6 +17,18 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 
 
+# Map distribution type strings to custom distribution functions
+_MAPPING = {
+    "uniform": FloatDistribution,
+    "norm": NormalDistribution,
+    "truncnorm": TruncatedNormalDistribution,
+}
+
+
+def get_mapping_dict():
+    return _MAPPING
+
+
 @dataclass
 class OptimizationConfig:
     """Configuration class for optimization settings.
@@ -52,8 +64,26 @@ class OptimizationConfig:
 
     space: SpaceConfig
     metric: MetricConfig
-    num_worker: int = 4
+    num_workers: int = 4
     num_samples: int = 100
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create an OptimizationConfig instance from a dictionary.
+
+        Args:
+            data (dict): Dictionary containing configuration data.
+
+        Returns:
+            OptimizationConfig: A new instance initialized with data from the dict.
+        """
+
+        payload = dict(data)
+        if "metric" in payload and not isinstance(payload["metric"], MetricConfig):
+            payload["metric"] = MetricConfig.from_dict(payload["metric"])
+        if "space" in payload and not isinstance(payload["space"], SpaceConfig):
+            payload["space"] = SpaceConfig.from_dict(_MAPPING, payload["space"])
+        return cls(**payload)
 
     @classmethod
     def from_json(cls, infile: str):
@@ -85,17 +115,9 @@ class OptimizationConfig:
             ```
         """
 
-        mapping = {
-            "uniform": FloatDistribution,
-            "norm": NormalDistribution,
-            "truncnorm": TruncatedNormalDistribution,
-        }
-
         with open(infile, "r") as f:
             data = json.load(f)
-        data['metric'] = MetricConfig.from_dict(data["metric"]) if "metric" in data else None
-        data['space'] = SpaceConfig.from_dict(mapping, data['space']) if 'space' in data else None
-        return cls(**data)
+        return cls.from_dict(data)
 
     def to_json(self, outfile: str):
         """Serialize the configuration to a JSON file.
@@ -132,10 +154,10 @@ class OptimizationConfig:
 
 @dataclass
 class GarisomOptimizationConfig(OptimizationConfig):
-    """Specialized optimization configuration for Garisom model optimization.
+    """Specialized optimization configuration for gain-risk model optimization.
 
     Extends the base OptimizationConfig with additional parameters specific
-    to GARISOM model. Includes population-level settings and temporal constraints
+    to gain-risk models. Includes population-level settings and temporal constraints
     for optimization runs.
 
     Attributes:
@@ -170,6 +192,24 @@ class GarisomOptimizationConfig(OptimizationConfig):
     end_date: datetime = datetime(2023, 8, 24)
 
     @classmethod
+    def from_dict(cls, data: dict):
+        """Create a GarisomOptimizationConfig instance from a dictionary.
+
+        Args:
+            data (dict): Dictionary containing configuration data.
+
+        Returns:
+            GarisomOptimizationConfig: A new instance initialized with data from the dict.
+        """
+
+        instance = super().from_dict(data)
+        if isinstance(instance.start_date, str):
+            instance.start_date = datetime.strptime(instance.start_date, "%Y-%m-%d")
+        if isinstance(instance.end_date, str):
+            instance.end_date = datetime.strptime(instance.end_date, "%Y-%m-%d")
+        return instance
+
+    @classmethod
     def from_json(cls, infile: str):
         """Create a GarisomOptimizationConfig instance from a JSON file.
 
@@ -183,9 +223,6 @@ class GarisomOptimizationConfig(OptimizationConfig):
         Returns:
             GarisomOptimizationConfig: A new instance initialized with data from the file.
         """
-        instance = super().from_json(infile)
-        if isinstance(instance.start_date, str):
-            instance.start_date = datetime.strptime(instance.start_date, "%Y-%m-%d")
-        if isinstance(instance.end_date, str):
-            instance.end_date = datetime.strptime(instance.end_date, "%Y-%m-%d")
-        return instance
+        with open(infile, "r") as f:
+            data = json.load(f)
+        return cls.from_dict(data)

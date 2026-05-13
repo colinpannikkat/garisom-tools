@@ -81,15 +81,15 @@ class MetricConfig:
             config_dict = {
                 'metrics': ['rmse', 'r2', 'nse'],
                 'modes': ['min', 'max', 'max'],
-                'params': ['leaf_temp', 'transpiration', 'leaf_temp.alt']
+                'params': ['leaftemp.a', 'E-MD', 'leaftemp.b']
             }
 
             config = MetricConfig.from_dict(config_dict)
 
             # Results in:
-            # - RMSE on leaf_temp (minimize)
-            # - R² on transpiration (maximize)
-            # - NSE on leaf_temp with alt name (maximize)
+            # - RMSE on leaftemp (minimize)
+            # - R2 on E-MD (maximize)
+            # - NSE on leaftemp (maximize)
             ```
 
         Note:

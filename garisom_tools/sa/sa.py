@@ -320,7 +320,7 @@ class SensitivityAnalysis:
 
         return first_order_indices, total_order_indices, error_first_order_indices, error_total_order_indices
 
-    def run(self, out_dir: str):
+    def run(self, out_dir: str) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Execute the complete sensitivity analysis workflow.
 
         Runs the entire sensitivity analysis process including sample generation,
@@ -413,7 +413,7 @@ class SensitivityAnalysis:
 
         np.save(f"{res_dir}/model_output.npy", outputs)
 
-        first, total, _, _ = self._analyze(outputs, out_names, errors, self.config.problem, res_dir)
+        first, total, first_err, tot_err = self._analyze(outputs, out_names, errors, self.config.problem, res_dir)
 
         self.plot(
             self.config.problem,
@@ -425,6 +425,8 @@ class SensitivityAnalysis:
             param_samples,
             plt_dir
         )
+
+        return first, total, first_err, tot_err
 
     def plot(
         self,
@@ -556,12 +558,6 @@ class SensitivityAnalysis:
         param_values = np.array([[sample[name] for name in problem.names] for sample in param_values])
 
         for idx, output_name in enumerate(out_names):
-            fig, axes = plt.subplots(
-                len(problem.names),
-                1,
-                figsize=(10, 8),
-                sharex=True
-            )
 
             for i, name in enumerate(problem.names):
                 plt.figure(figsize=(10, 6))
@@ -573,10 +569,9 @@ class SensitivityAnalysis:
                 plt.ylabel('Mean Output')
                 plt.legend()
                 plt.grid(True)
-
                 plt.tight_layout()
                 plt.savefig(f"{plt_dir}/mean_output_{output_name}_vs_{name}.png")
-                plt.close(fig)
+                plt.close()
 
         # Plot and save the errors for each output in errors
         for output_name, error_values in errors.items():
@@ -594,3 +589,5 @@ class SensitivityAnalysis:
                 plt.tight_layout()
                 plt.savefig(f"{plt_dir}/error_{param}_{output_name}.png")
                 plt.close()
+
+        plt.close()

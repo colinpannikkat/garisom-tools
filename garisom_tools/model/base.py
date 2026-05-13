@@ -66,6 +66,9 @@ class Model(ABC):
         """
         Execute the model with multiple parameter sets in parallel.
 
+        For models that execute outside of Python it is recommended to use ThreadPoolExecutor,
+        while Python-based models should use ProcessPoolExecutor to bypass the GIL.
+
         Args:
             X (list[dict[str, Any]], optional): List of parameter dictionaries.
                 Each dictionary contains parameter names as keys and values as floats.

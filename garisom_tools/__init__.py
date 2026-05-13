@@ -68,12 +68,12 @@ the model in your work, please cite the following.
     A stomatal control model based on optimization of carbon gain versus hydraulic risk predicts aspen sapling
     responses to drought. New Phytologist 220: 836-850.
 
-The Potkay model was originally published in the following paper. If you use 
+The Potkay model was originally published in the following paper. If you use
 the model please cite the following.
 
-[3] Potkay A, Cabon A, Peters RL, Fonti P, Sapes G, Sala A, Stefanski A, Butler E, 
-    Bermudez R, Montgomery R, et al. 2025. Generalized Stomatal Optimization of 
-    Evolutionary Fitness Proxies for Predicting Plant Gas Exchange Under Drought, 
+[3] Potkay A, Cabon A, Peters RL, Fonti P, Sapes G, Sala A, Stefanski A, Butler E,
+    Bermudez R, Montgomery R, et al. 2025. Generalized Stomatal Optimization of
+    Evolutionary Fitness Proxies for Predicting Plant Gas Exchange Under Drought,
     Heatwaves, and Elevated CO2. Global Change Biology 31: e70049.
 
 """

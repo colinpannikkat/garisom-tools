@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 # Parallel runs
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .base import Model
 
@@ -18,7 +18,7 @@ class PotkayModel(Model):
     Optimization Model (GSO). Information on the model can be found in:
 
     - Potkay A et al. 2025
-        Generalized Stomatal Optimization of Evolutionary Fitness Proxies for Predicting 
+        Generalized Stomatal Optimization of Evolutionary Fitness Proxies for Predicting
         Plant Gas Exchange Under Drought, Heatwaves, and Elevated CO2
 
     This implementation:
@@ -106,7 +106,7 @@ class PotkayModel(Model):
 
         pbar = tqdm(total=N)
 
-        with ThreadPoolExecutor(max_workers=workers) as executor:
+        with ProcessPoolExecutor(max_workers=workers) as executor:
             futures = {
                 executor.submit(
                     cls.run,
