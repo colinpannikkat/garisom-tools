@@ -13,7 +13,7 @@ from scikit-learn as well as custom modeling metrics.
 ## Classes
 
 - `Metric`: Base metric class with name, output variable, and evaluation function
-- `MSE`, `RMSE`, `R2`, `MAPE`, `MADE`, `NNSE`: Specific metric implementations
+- `MSE`, `RMSE`, `R2`, `MAPE`, `MADE`, `NNSE`, `EMPTY`: Specific metric implementations
 - `Mode`: Enumeration for optimization modes (min/max)
 
 ## Example Usage
@@ -91,7 +91,7 @@ def nash_sutcliffe_efficiency(targets, predictions):
         conceptual models part I — A discussion of principles. Journal of Hydrology,
         10(3), 282-290.
     """
-    return 1 - (np.sum((targets - predictions) ** 2) / np.sum((targets - np.mean(targets)) ** 2))
+    return float(1 - (np.sum((targets - predictions) ** 2) / np.sum((targets - np.mean(targets)) ** 2)))
 
 
 def normalized_nash_sutcliffe_efficiency(targets, predictions):
@@ -359,7 +359,8 @@ class NSE(Metric):
 
 class EMPTY(Metric):
     """
-    Empty metric.
+    Empty metric. Useful when passing a metric is required but you don't necessary need an evaluation of a certain
+    parameter. For example, running a sensitivty analysis on an output that you do not have ground-truth data for.
     """
     def __init__(self, output_name: str, name: str = "none"):
         super().__init__(name=name, output_name=output_name, func=None)
