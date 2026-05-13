@@ -342,7 +342,7 @@ class Sim:
         return StatsResults(stats_res)
 
     @staticmethod
-    def plot_ci(stats: dict[str, list[dict]]):
+    def plot_ci(stats: dict[str, pd.DataFrame], index_columns: list[str] | None):
         """Plots confidence intervals for simulation outputs over time.
 
         Creates time series plots showing the mean values and 95% confidence
@@ -350,10 +350,9 @@ class Sim:
         a line with the confidence interval as a shaded region.
 
         Args:
-            stats (dict[str, list[dict]]): Dictionary mapping output variable
-                names to lists of statistical dictionaries. Each dictionary
-                should contain "mean" and "95%_ci" keys with corresponding
-                values for each time step.
+            stats (dict[str, pd.DataFrame]): Dictionary with DataFrames for
+                statistical outputs. Expected keys include "mean", "ci_low",
+                and "ci_high", with matching columns for output variables.
 
         Note:
             This method assumes that the statistics are ordered by time and
@@ -361,20 +360,25 @@ class Sim:
             displayed using matplotlib.pyplot.show().
 
         Example:
-            >>> stats_dict = {"biomass": [{"mean": 10, "95%_ci": [8, 12]}, ...]}
-            >>> Sim.plot_ci(stats_dict)
+            >>> stats = sim.analyze(results, index_columns=["time"]).to_dict()
+            >>> Sim.plot_ci(stats)
         """
+        mean = stats.get("mean")
+        ci_low = stats.get("ci_low")
+        ci_high = stats.get("ci_high")
 
-        for output, stat_list in stats.items():
-            ci = [s["95%_ci"] for s in stat_list]
-            mean = [s["mean"] for s in stat_list]
-            t = range(len(stat_list))
-            ci_low = [c[0] for c in ci]
-            ci_high = [c[1] for c in ci]
+        if mean is None or ci_low is None or ci_high is None:
+            raise ValueError("Stats must include 'mean', 'ci_low', and 'ci_high' DataFrames.")
 
+        index_set = set(index_columns or [])
+
+        for output in mean.columns:
+            if output in index_set:
+                continue
+            t = mean.index
             plt.figure()
-            plt.plot(t, mean, label="Mean")
-            plt.fill_between(t, ci_low, ci_high, color="lightblue", alpha=0.5, label="95% CI")
+            plt.plot(t, mean[output], label="Mean")
+            plt.fill_between(t, ci_low[output], ci_high[output], color="lightblue", alpha=0.5, label="95% CI")
             plt.title(f"95% Confidence Interval for {output}")
             plt.xlabel("Time Step")
             plt.ylabel(output)
