@@ -36,7 +36,7 @@ Import the package in your Python code:
 from garisom_tools import SperryModel
 ```
 
-To run the Sperry model (Sperry et al. 2017), you must provide a model directory path. To download and build the model please see the [GARISOM repository](https://github.com/colinpannikkat/garisom).
+To run the Sperry model (Sperry et al. 2017), you must provide a model directory path. To download and build the model please see the [GARISOM repository](https://github.com/ForestEcophys-OSU/garisom).
 
 ### Example: Running the Model
 
